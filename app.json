@@ -33,6 +33,16 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "supabaseUrl": "https://besyjnekyhwawdmocehw.supabase.co",
+      "supabaseKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc3lqbmVreWh3YXdkbW9jZWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5MDA2NjMsImV4cCI6MjA1NzQ3NjY2M30.9CR_BuwcCKOy8YpRu8057Y90rPcynriqF9gqzbH9fAw",
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "21d6b8b6-f34f-4d42-bc79-c809619d4d97"
+      }
     }
   }
 }

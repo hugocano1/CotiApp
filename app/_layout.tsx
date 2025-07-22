@@ -1,32 +1,41 @@
 // app/_layout.tsx
+import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
-import { useAuth } from '../src/hooks/useAuth'; // Ajusta la ruta si es necesario
-import { useRouter, useSegments, Slot } from 'expo-router';
+import { useAuth } from '../src/hooks/useAuth'; // Asegúrate que la ruta sea correcta
+import { useRouter, useSegments, Stack } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function RootLayout() {
-  const { session, loading } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
 
   useEffect(() => {
-  // No hacer nada hasta que sepamos si hay o no una sesión.
-  if (loading) return;
+    if (authLoading) return;
 
-  const inAuthGroup = segments[0] === '(auth)';
+    const inAuthGroup = segments[0] === '(auth)';
+    const userRole = session?.user?.user_metadata?.user_type;
 
-  if (session && !inAuthGroup) {
-      router.replace('/(main)');
+    if (session) {
+      if (userRole === 'buyer' && !segments.includes('(buyer)')) {
+        router.replace('/(buyer)');
+      } else if (userRole === 'seller' && !segments.includes('(seller)')) {
+        router.replace('/(seller)');
+      }
+    } else if (!inAuthGroup) {
+      router.replace('/(auth)');
+    }
+  }, [session, authLoading, segments, router]);
 
-  } else if (!session) {
-    router.replace('/(main)');
-   
+  if (authLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator />
+      </View>
+    );
   }
-}, [session, loading, segments, router]);
-
-  if (loading) {
-    return <View style={{ flex: 1, justifyContent: 'center' }}><ActivityIndicator /></View>;
-  }
-
-   return <Slot />;
+  
+  // ✅ CORRECCIÓN: Simplemente devolvemos el componente Stack.
+  // Expo Router se encargará de renderizar los grupos (auth), (buyer), y (seller) adentro.
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

@@ -57,5 +57,5 @@ export function useUserProfile() {
     }
   }, [session, authLoading, fetchProfile]);
 
-  return { profile, role, loading };
+  return { profile, role, loading, refreshProfile: fetchProfile };
 }

@@ -1,45 +1,41 @@
 // app/(auth)/index.tsx
 
-import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, ActivityIndicator, Text, ImageBackground, TouchableOpacity, Image, Alert } from 'react-native';
 import { Link } from 'expo-router';
-import { supabase } from '../../src/services/auth/config/supabaseClient'; // ✅ Ruta corregida
-import Logo from '../../assets/images/login_logo.png';             // ✅ Ruta corregida
-import BackgroundImage from '../../assets/images/login_header_image.jpg'; // ✅ Ruta corregida
+import { supabase } from '../../src/services/auth/config/supabaseClient';
+import Logo from '../../assets/images/login_logo.png';
+import BackgroundImage from '../../assets/images/login_header_image.jpg';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleLogin = async () => {
-  if (!email || !password) {
-    Alert.alert('Error', 'Por favor, completa todos los campos.');
-    return;
-  }
-
-  setIsLoading(true);
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: password.trim(),
-    });
-
-    if (error) {
-      Alert.alert('Error', error.message);
-    } else if (data.session) {
-      // ✅ ¡ÉXITO! Si no hay error y tenemos sesión, redirigimos manualmente.
-      router.replace('/(main)'); // Redirige a la pantalla principal
+    if (!email || !password) {
+      Alert.alert('Error', 'Por favor, completa todos los campos.');
+      return;
     }
 
-  } catch (error) {
-    Alert.alert('Error', (error as Error).message || 'Error inesperado');
-  } finally {
-    setIsLoading(false);
-  }
-};
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
+      });
+
+      if (error) {
+        Alert.alert('Error', error.message || 'Error al iniciar sesión');
+      }
+      // Si no hay error, no hacemos nada más. El layout raíz se encargará de la redirección.
+
+    } catch (error) {
+      Alert.alert('Error', (error as Error).message || 'Error inesperado');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
@@ -82,6 +78,7 @@ export default function LoginScreen() {
   );
 }
 
+// Tus estilos (sin cambios)
 const styles = StyleSheet.create({
     backgroundImage: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     container: { width: '85%', alignItems: 'center' },
