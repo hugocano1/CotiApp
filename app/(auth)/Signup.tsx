@@ -1,54 +1,42 @@
-// Asegúrate de que todas las importaciones necesarias estén aquí
-import { useState } from 'react';
+// app/(auth)/signup.tsx
+
+import React, { useState } from 'react';
 import { View, TextInput, Button, Alert, ActivityIndicator, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { NavigationProp } from '@react-navigation/native';
+import { Link } from 'expo-router'; // ✅ 1. Importamos Link de Expo Router
 import { AuthService } from '../../src/services/auth/auth.service'; // Asegúrate que la ruta es correcta
+import { COLORS } from '../../src/constants/colors'; // Importamos nuestros colores de marca
 
-interface SignupScreenProps {
-  navigation: NavigationProp<any>;
-}
-
-export default function SignupScreen({ navigation }: SignupScreenProps) {
+export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
   const [loading, setLoading] = useState(false);
 
-  // --- Función de Registro Corregida ---
   const handleSignUp = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Completa todos los campos');
       return;
     }
-
     setLoading(true);
-
     try {
-      // 1. La única responsabilidad del cliente es llamar a signUp
-      Alert.alert('Enviando Datos a Supabase', `Email: ${email}\nPassword: [oculto]\nRol Seleccionado: ${role}`);
       const user = await AuthService.signUp(email, password, role);
-      
-      // 2. Si tiene éxito, informa al usuario. El Auth Hook hará el resto en el backend.
       if (user) {
         Alert.alert(
           'Registro Exitoso',
-          'Por favor, revisa tu email para confirmar tu cuenta.'
+          'Por favor, revisa tu email para confirmar tu cuenta. Serás redirigido al inicio de sesión.'
         );
-        // Aquí puedes navegar a la pantalla de Login o a una de espera
-        // navigation.navigate('Login');
+        // La redirección después del login la manejará nuestro layout raíz automáticamente.
       }
-
     } catch (error: any) {
-      // Muestra cualquier error que nuestro AuthService haya detectado (ej: contraseña débil)
       Alert.alert('Error en el Registro', error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // --- El resto de tu componente (la parte visual) ---
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Crear una Cuenta</Text>
       <TextInput
         style={styles.input}
         placeholder="Correo electrónico"
@@ -82,22 +70,32 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
       </View>
       
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
       ) : (
-        <Button title="Registrarse" onPress={handleSignUp} />
+        <Button title="Registrarse" onPress={handleSignUp} color={COLORS.secondary} />
       )}
+      
+      {/* ✅ 2. Añadimos el enlace para volver a Login */}
+      <Link href="/(auth)" asChild>
+        <TouchableOpacity style={styles.loginLink}>
+          <Text style={styles.loginLinkText}>¿Ya tienes una cuenta? Inicia sesión</Text>
+        </TouchableOpacity>
+      </Link>
     </View>
   );
 }
 
-// Estilos (los mismos que te pasé para RegisterScreen)
+// Estilos usando nuestra paleta de colores de marca
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  input: { height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 12, paddingHorizontal: 8 },
-  label: { fontSize: 16, marginBottom: 8 },
-  roleSelector: { flexDirection: 'row', marginBottom: 20 },
-  roleButton: { flex: 1, padding: 10, alignItems: 'center', backgroundColor: '#f0f0f0', borderWidth: 1, borderColor: '#ccc' },
-  roleButtonSelected: { backgroundColor: '#007BFF', borderColor: '#007BFF' },
-  roleText: { color: '#000' },
-  roleTextSelected: { color: '#fff', fontWeight: 'bold' },
+  container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: COLORS.background },
+  title: { fontSize: 24, fontWeight: 'bold', color: COLORS.primary, textAlign: 'center', marginBottom: 30 },
+  input: { height: 50, borderColor: COLORS.gray, borderWidth: 1, marginBottom: 15, paddingHorizontal: 10, borderRadius: 8, backgroundColor: COLORS.white },
+  label: { fontSize: 16, marginBottom: 10, color: COLORS.text },
+  roleSelector: { flexDirection: 'row', marginBottom: 25 },
+  roleButton: { flex: 1, padding: 12, alignItems: 'center', backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.gray, borderRadius: 8, marginHorizontal: 5 },
+  roleButtonSelected: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  roleText: { color: COLORS.text, fontWeight: '500' },
+  roleTextSelected: { color: COLORS.white, fontWeight: 'bold' },
+  loginLink: { marginTop: 25, alignItems: 'center' },
+  loginLinkText: { color: COLORS.primary, fontSize: 16 }
 });

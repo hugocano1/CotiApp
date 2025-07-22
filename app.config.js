@@ -20,7 +20,8 @@ export default ({ config }) => ({
     adaptiveIcon: {
       foregroundImage: "./assets/images/adaptive-icon.png",
       backgroundColor: "#ffffff"
-    }
+    },
+    package: "com.hugocano.cotiapp"
   },
   web: {
     favicon: "./assets/images/favicon.png"
