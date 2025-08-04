@@ -1,10 +1,8 @@
-// src/hooks/useShoppingLists.ts
-
+// Ruta: src/hooks/useShoppingLists.ts
 import { useState, useCallback } from 'react';
 import { supabase } from '../services/auth/config/supabaseClient';
-import { useFocusEffect } from '@react-navigation/native'; // ✅ 1. Importa useFocusEffect
+import { useFocusEffect } from '@react-navigation/native';
 
-// Tu tipo ShoppingList se queda igual
 export type ShoppingList = {
   id: string;
   title: string;
@@ -15,9 +13,10 @@ export type ShoppingList = {
   min_budget?: number;
   max_budget?: number;
   items: Array<{ product_name: string; quantity: number; brand?: string }>;
+  // ✅ AÑADIDO: Tipo para el conteo de ofertas
+  offers: { count: number }[]; 
 };
 
-// El statusFilter ahora puede ser null si queremos todas las listas
 export const useShoppingLists = (statusFilter: 'active' | 'completed' | null) => {
   const [data, setData] = useState<ShoppingList[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,13 +29,15 @@ export const useShoppingLists = (statusFilter: 'active' | 'completed' | null) =>
       
       if (!user) throw new Error('Usuario no autenticado');
 
-      // Modificamos la consulta para que sea más flexible
+      // ✅ CORRECCIÓN: Modificamos la consulta para incluir el conteo de ofertas
       let query = supabase
         .from('shopping_lists')
-        .select('*')
+        .select(`
+          *,
+          offers (count)
+        `)
         .eq('buyer_id', user.id);
       
-      // Aplicamos el filtro de estado solo si no es nulo
       if (statusFilter) {
         const statuses = statusFilter === 'active' ? ['active', 'pending'] : ['completed'];
         query = query.in('status', statuses);
@@ -45,7 +46,7 @@ export const useShoppingLists = (statusFilter: 'active' | 'completed' | null) =>
       const { data: lists, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      setData(lists || []);
+      setData(lists as ShoppingList[] || []); // Hacemos un cast al tipo correcto
     } catch (err) {
       setError(err as Error);
     } finally {
@@ -53,15 +54,9 @@ export const useShoppingLists = (statusFilter: 'active' | 'completed' | null) =>
     }
   }, [statusFilter]);
 
-
-  // ✅ 2. Reemplazamos useEffect con useFocusEffect
   useFocusEffect(
     useCallback(() => {
       fetchLists();
-      // Nota: Las suscripciones en tiempo real dentro de useFocusEffect
-      // pueden ser complejas de manejar. Por ahora, nos enfocamos en que
-      // la carga de datos funcione cada vez que entras a la pantalla.
-      // El "pull-to-refresh" que tienes puede manejar las actualizaciones manuales.
     }, [fetchLists])
   );
 

@@ -58,15 +58,17 @@ export default function BuyerListDetailsScreen() {
       
       <Link 
         href={{
-          pathname: `/(buyer)/(mis-pedidos)/order-details/${listId}`,
-          params: { id: listId }
-        }} 
+          // Aquí especificamos la ruta base sin el parámetro
+          pathname: "/(buyer)/(mis-pedidos)/order-details/[id]", 
+          // Y aquí pasamos el valor del parámetro en el objeto 'params'
+          params: { id: listId } 
+          }}
         asChild
-      >
-         <Button 
-            title="Ver Ofertas Recibidas" 
-            buttonStyle={styles.viewOffersButton}
-            icon={<Icon name="tag-multiple" type="material-community" color="white" containerStyle={{marginRight: 10}}/>}
+        >
+        <Button 
+         title="Ver Ofertas Recibidas" 
+          buttonStyle={styles.viewOffersButton}
+          icon={<Icon name="tag-multiple" type="material-community" color="white" containerStyle={{marginRight: 10}}/>}
         />
       </Link>
     </ScrollView>
