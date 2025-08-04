@@ -1,9 +1,9 @@
-// app/(buyer)/list-offers/[id].tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, FlatList, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Card, Button } from '@rneui/themed';
-import { useListOffers } from '../../../../src/hooks/useListOffers'; // Crearemos este hook
+import { useListOffers } from '../../../../src/hooks/useListOffers'; 
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
 import { COLORS } from '../../../../src/constants/colors';
 
@@ -22,7 +22,7 @@ export default function ListOffersScreen() {
           try {
             await ShoppingListService.acceptOffer(offerId, listId as string);
             Alert.alert("¡Éxito!", "Has aceptado la oferta y se ha creado un nuevo pedido.");
-            router.replace('/(buyer)/mis-pedidos'); // Llevamos al usuario a sus pedidos
+            router.replace({ pathname: '/(buyer)/(mis-pedidos)' }); // Llevamos al usuario a sus pedidos
           } catch (error: any) {
             Alert.alert("Error", error.message);
           }

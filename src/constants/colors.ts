@@ -6,5 +6,6 @@ export const COLORS = {
   background: '#F4F4F4', // Gris Niebla (para el fondo principal de las pantallas)
   text: '#454545',       // Gris Grafito (para el texto principal)
   white: '#FFFFFF',    
-  gray: '#A9A9A9',  // Un gris estándar para bordes o texto secundario
+  gray: '#A9A9A9',       // Un gris estándar para bordes o texto secundario
+  danger: '#e74c3c',  
 };

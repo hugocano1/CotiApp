@@ -1,37 +1,45 @@
-// app/(buyer)/(mis-listas)/index.tsx
+// Ruta: app/(buyer)/(mis-listas)/index.tsx
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, View } from 'react-native';
 import { useShoppingLists } from '../../../src/hooks/useShoppingLists';
-import { Card, Badge } from '@rneui/themed';
 import { Link } from 'expo-router';
 import { COLORS } from '../../../src/constants/colors';
+import { ShoppingListItem } from '../../../src/components/ShoppingListItem';
 
 export default function MisListasScreen() {
-  const { data: lists, loading, refresh } = useShoppingLists('active'); // o el filtro que necesites
+  const { data: lists, loading, refresh } = useShoppingLists('active');
 
   if (loading) {
     return <ActivityIndicator size="large" style={styles.centered} />;
   }
+  
   return (
-    <FlatList
-      style={styles.container}
-      data={lists}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <Link href={{ pathname: `/(buyer)/(mis-listas)/list-details/${item.id}` }} asChild>
-          <TouchableOpacity>
-            <Card containerStyle={styles.card}>
-              <Card.Title>{item.title}</Card.Title>
-              <Badge value={item.status} status={item.status === 'active' ? 'success' : 'primary'} />
-            </Card>
-          </TouchableOpacity>
-        </Link>
-      )}
-    />
+    <View style={styles.container}>
+      <FlatList
+        data={lists}
+        keyExtractor={(item) => item.id}
+        onRefresh={refresh}
+        refreshing={loading}
+        renderItem={({ item }) => (
+          // ✅ Cambiado: Usamos la sintaxis de objeto para el enlace
+          <Link 
+            href={{ 
+              pathname: "/(buyer)/(mis-listas)/list-details/[id]",
+              params: { id: item.id }
+            }} 
+            asChild
+          >
+            <TouchableOpacity>
+              <ShoppingListItem list={item} />
+            </TouchableOpacity>
+          </Link>
+        )}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
+    </View>
   );
 }
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  card: { borderRadius: 10 },
 });
