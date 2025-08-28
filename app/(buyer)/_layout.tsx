@@ -3,22 +3,96 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Icon } from '@rneui/themed';
 import { COLORS } from '../../src/constants/colors';
+// ✅ CORRECCIÓN: Importaciones movidas al principio del archivo
+import { TouchableOpacity, StyleSheet } from 'react-native';
+
+// ✅ CORRECCIÓN: Definición de estilos movida antes de ser usada
+const styles = StyleSheet.create({
+  createButtonTab: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.secondary, // Usamos el color de acción
+    borderRadius: 30,
+    marginHorizontal: 5,
+    marginVertical: 5,
+    height: 40,
+    elevation: 3,
+  },
+});
 
 export default function BuyerTabLayout() {
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: COLORS.primary,
-        headerShown: false, 
+        headerShown: false, // Ocultamos todos los headers por defecto
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Resumen', headerShown: true, tabBarIcon: ({ color }) => <Icon name="home" type="material-community" color={color} /> }} />
-      <Tabs.Screen name="(mis-listas)" options={{ title: 'Mis Listas', tabBarIcon: ({ color }) => <Icon name="format-list-bulleted" type="material-community" color={color} /> }} />
-      {/* ✅ CORRECCIÓN: Añadimos el tipo de ícono correcto */}
-      <Tabs.Screen name="crear-lista" options={{ title: 'Crear Lista', headerShown: true, tabBarIcon: ({ color }) => <Icon name="playlist-plus" type="material-community" color={color} /> }} />
-      <Tabs.Screen name="(mis-pedidos)" options={{ title: 'Mis Pedidos', tabBarIcon: ({ color }) => <Icon name="receipt" type="material-community" color={color} /> }} />
-      {/* ✅ CORRECCIÓN: Añadimos el tipo de ícono correcto */}
-      <Tabs.Screen name="perfil" options={{ title: 'Perfil', headerShown: true, tabBarIcon: ({ color }) => <Icon name="account" type="material-community" color={color} /> }} />
+      <Tabs.Screen 
+        name="index" 
+        options={{ 
+          title: 'Resumen', 
+          headerShown: true, // Mostramos explícitamente el header para esta pantalla
+          tabBarIcon: ({ color }) => <Icon name="home" type="material-community" color={color} /> 
+        }} 
+      />
+      
+      {/* ✅ CORRECCIÓN CLAVE: Nos aseguramos de que el header de la pestaña esté oculto */}
+      <Tabs.Screen 
+        name="(mis-listas)" 
+        options={{ 
+          title: 'Mis Listas', 
+          headerShown: false, 
+          unmountOnBlur: true, // This will reset the stack on tab press
+          tabBarIcon: ({ color }) => <Icon name="format-list-bulleted" type="material-community" color={color} /> 
+        }} 
+      />
+      
+      <Tabs.Screen 
+        name="crear-lista" 
+        options={{ 
+          title: 'Crear Lista', 
+          headerShown: true, 
+          tabBarIcon: ({ color, focused }) => (
+            <Icon 
+              name="playlist-plus" 
+              type="material-community" 
+              color={focused ? COLORS.white : color}
+            />
+          ),
+          tabBarButton: (props) => (
+            <TouchableOpacity {...props} style={styles.createButtonTab} />
+          ),
+          tabBarLabelStyle: { color: COLORS.white, fontWeight: 'bold' },
+        }} 
+      />
+
+      <Tabs.Screen 
+        name="(mis-pedidos)" 
+        options={{ 
+          title: 'Mis Pedidos', 
+          headerShown: false, 
+          unmountOnBlur: true, // This will reset the stack on tab press
+          tabBarIcon: ({ color }) => <Icon name="receipt" type="material-community" color={color} /> 
+        }} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('(mis-pedidos)');
+          },
+        })}
+      />
+      <Tabs.Screen 
+        name="perfil" 
+        options={{ 
+          title: 'Perfil', 
+          headerShown: true, 
+          headerStyle: { backgroundColor: COLORS.primary }, 
+          headerTintColor: COLORS.white, 
+          tabBarIcon: ({ color }) => <Icon name="account" type="material-community" color={color} /> 
+        }} 
+      />
     </Tabs>
   );
 }

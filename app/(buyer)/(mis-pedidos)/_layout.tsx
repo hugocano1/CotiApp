@@ -12,6 +12,7 @@ export default function MisPedidosLayout() {
     >
       <Stack.Screen name="index" options={{ title: "Mis Pedidos" }} />
       {/* ✅ AÑADIMOS LA NUEVA PANTALLA DE DETALLES */}
+      <Stack.Screen name="order-details/[id]" options={{ title: "Detalles de la Oferta" }} />
       <Stack.Screen name="pedido-detalle/[id]" options={{ title: "Detalles del Pedido" }} />
     </Stack>
   );

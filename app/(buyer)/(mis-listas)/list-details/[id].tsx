@@ -3,12 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { useLocalSearchParams, Link } from 'expo-router';
 import { Card, Button, Icon } from '@rneui/themed';
-import { ShoppingListService } from '../../../../src/services/shoppingList.service'; // Asegúrate que la ruta sea correcta
-import { COLORS } from '../../../../src/constants/colors'; // Asegúrate que la ruta sea correcta
+import { ShoppingListService } from '../../../../src/services/shoppingList.service';
+import { COLORS } from '../../../../src/constants/colors';
 
 export default function BuyerListDetailsScreen() {
   const { id } = useLocalSearchParams();
-  const listId = Array.isArray(id) ? id[0] : id; // Nos aseguramos de que sea un string
+  const listId = Array.isArray(id) ? id[0] : id;
 
   const [listDetails, setListDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -38,10 +38,11 @@ export default function BuyerListDetailsScreen() {
       <Text style={styles.header}>{listDetails.title || 'Detalles de la Lista'}</Text>
       
       <Card containerStyle={styles.card}>
-        <Card.Title>Resumen</Card.Title>
+        <Card.Title>Resumen de la Lista</Card.Title>
         <Card.Divider/>
         <InfoRow icon="information-outline" text="Estado" value={listDetails.status} />
-        <InfoRow icon="cash" text="Presupuesto" value={`$${listDetails.min_budget || 0} - $${listDetails.max_budget || 0}`} />
+        <InfoRow icon="cash" text="Presupuesto" value={`$${listDetails.min_budget || 'N/A'} - $${listDetails.max_budget || 'N/A'}`} />
+        <InfoRow icon="truck-delivery-outline" text="Tipo de Entrega" value={listDetails.delivery_type || 'No especificado'} />
       </Card>
 
       <Card containerStyle={styles.card}>
@@ -49,20 +50,21 @@ export default function BuyerListDetailsScreen() {
         <Card.Divider/>
         {(listDetails.items || []).map((item: any, index: number) => (
           <View key={index} style={styles.itemContainer}>
-            <Text style={styles.itemName}>- {item.name}</Text>
-            <Text style={styles.itemDetails}>Cantidad: {item.quantity || 'N/A'}</Text>
-            <Text style={styles.itemDetails}>Detalles: {item.details || 'Ninguno'}</Text>
+            <Text style={styles.itemName}>{item.name}</Text>
+            <View style={styles.itemDetailsRow}>
+                <Text style={styles.itemDetailText}>Cantidad: {item.quantity} {item.unit || ''}</Text>
+                {item.brand && <Text style={styles.itemDetailText}>· Marca: {item.brand}</Text>}
+            </View>
+            {item.notes && <Text style={styles.itemNotes}>Notas: {item.notes}</Text>}
           </View>
         ))}
       </Card>
       
       <Link 
         href={{
-          // Aquí especificamos la ruta base sin el parámetro
-          pathname: "/(buyer)/(mis-pedidos)/order-details/[id]", 
-          // Y aquí pasamos el valor del parámetro en el objeto 'params'
+          pathname: `/(buyer)/(mis-pedidos)/order-details/[id]`,
           params: { id: listId } 
-          }}
+        }}
         asChild
         >
         <Button 
@@ -92,7 +94,9 @@ const styles = StyleSheet.create({
     infoRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 5 },
     infoTextLabel: { marginLeft: 10, fontSize: 16, color: COLORS.gray },
     infoTextValue: { marginLeft: 5, fontSize: 16, color: COLORS.text, fontWeight: '500' },
-    itemContainer: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-    itemName: { fontSize: 16, fontWeight: 'bold' },
-    itemDetails: { fontSize: 14, color: COLORS.gray, marginLeft: 15 }
+    itemContainer: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+    itemName: { fontSize: 16, fontWeight: 'bold', color: COLORS.text, marginBottom: 5 },
+    itemDetailsRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
+    itemDetailText: { fontSize: 14, color: COLORS.gray, marginRight: 10 },
+    itemNotes: { fontSize: 14, color: COLORS.accent, fontStyle: 'italic', marginTop: 5, marginLeft: 5 }
 });

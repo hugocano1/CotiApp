@@ -47,7 +47,7 @@ export class ShoppingListService {
   }
 
   static async getListDetails(listId: string) {
-    const { data, error } = await supabase.from('shopping_lists').select('*').eq('id', listId).single();
+    const { data, error } = await supabase.from('shopping_lists').select('*, buyer:buyer_id(nombre, apellido)').eq('id', listId).single();
     if (error) { console.error("Error fetching list details:", error); throw new Error(error.message); }
     return data;
   }
@@ -79,7 +79,9 @@ export class ShoppingListService {
   }
 
   static async getOffersForList(listId: string) {
-    const { data, error } = await supabase.from('offers').select(`*, sellers:seller_id (store_id, stores (name, logo_url, rating) )`).eq('shopping_list_id', listId).order('price', { ascending: true });
+    const { data, error } = await supabase.from('offers').select(`*,
+        offer_items(*),
+        sellers:seller_id (store_id, stores (name, logo_url, rating) )`).eq('shopping_list_id', listId).order('price', { ascending: true });
     if (error) { console.error("Error fetching offers for list:", error); throw new Error(error.message); }
     return data || [];
   }
@@ -107,5 +109,57 @@ export class ShoppingListService {
       throw new Error(error.message);
     }
     return { success: true };
+  }
+
+  static async createDetailedOffer(data: {
+    shopping_list_id: string;
+    total_price: number;
+    notes?: string;
+    items: any[];
+  }) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Usuario no autenticado.");
+
+    // Step 1: Create the main offer to get an ID
+    const { data: offerData, error: offerError } = await supabase
+      .from('offers')
+      .insert({
+        shopping_list_id: data.shopping_list_id,
+        seller_id: user.id,
+        price: data.total_price,
+        notes: data.notes,
+        status: 'pending',
+      })
+      .select('id')
+      .single();
+
+    if (offerError) {
+      console.error('Error creating offer:', offerError);
+      throw new Error(offerError.message);
+    }
+
+    const offer_id = offerData.id;
+
+    // Step 2: Prepare and insert the offer items
+    const offerItems = data.items.map(item => ({
+      offer_id: offer_id,
+      list_item_id: item.id, // Assuming the item from the shopping list has an 'id'
+      item_name: item.name,
+      quantity: item.quantity,
+      unit_price: item.price,
+      unit: item.unit, // Added
+      brand: item.brand, // Added
+    }));
+
+    const { error: itemsError } = await supabase.from('offer_items').insert(offerItems);
+
+    if (itemsError) {
+      console.error('Error creating offer items:', itemsError);
+      // Optional: Attempt to delete the offer if items fail
+      await supabase.from('offers').delete().eq('id', offer_id);
+      throw new Error(itemsError.message);
+    }
+
+    return { success: true, offerId: offer_id };
   }
 }

@@ -1,86 +1,108 @@
-// app/(seller)/(listas)/index.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+// Ruta: app/(seller)/(listas)/index.tsx
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
-import { Card, Icon } from '@rneui/themed';
-import { ShoppingListService } from '../../../src/services/shoppingList.service'; // Asegúrate que la ruta sea correcta
+import { ButtonGroup } from '@rneui/themed';
 import { Link } from 'expo-router';
-import { COLORS } from '../../../src/constants/colors'; // Asegúrate que la ruta sea correcta
 import { useFocusEffect } from '@react-navigation/native';
+import { supabase } from '../../../src/services/auth/config/supabaseClient';
+import { COLORS } from '../../../src/constants/colors';
+import { SellerListItem } from '../../../src/components/SellerListItem'; // ✅ Importamos el nuevo componente
 
-// Hook para cargar las listas
-function useAvailableLists() {
+// Hook para cargar las listas con filtro
+function useAvailableLists(statusFilter: 'active' | 'closed') {
   const [lists, setLists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchLists = useCallback(async () => {
     setLoading(true);
     try {
-      const activeLists = await ShoppingListService.getActiveLists();
-      setLists(activeLists);
+      // ✅ CONSULTA MEJORADA: Traemos los datos del perfil del comprador
+      const { data, error } = await supabase
+        .from('shopping_lists')
+        .select(`
+          *,
+          buyer_profiles (
+            nombre,
+            apellido,
+            foto_perfil
+          )
+        `)
+        .eq('status', statusFilter);
+
+      if (error) throw error;
+      setLists(data || []);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [statusFilter]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchLists();
-    }, [fetchLists])
-  );
+  useFocusEffect(useCallback(() => { fetchLists(); }, [fetchLists]));
 
-  return { lists, loading };
+  return { lists, loading, refresh: fetchLists };
 }
 
-// Componente de la pantalla
 export default function AvailableListsScreen() {
-  const { lists, loading } = useAvailableLists();
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const statusFilter = selectedIndex === 0 ? 'active' : 'closed';
+  const { lists, loading, refresh } = useAvailableLists(statusFilter);
   
   if (loading) {
     return <ActivityIndicator size="large" style={styles.centered} />;
   }
 
-  // Componente para renderizar cada item de la lista
-  const renderItem = ({ item }: { item: any }) => (
-    // ✅ 1. Usamos Link para manejar toda la navegación.
-    <Link 
-      href={{
-        pathname: "/(seller)/(listas)/list-details/[id]",
-        params: { id: item.id }
-      } as any} // Usamos 'as any' para evitar el error de tipado que ya conocemos
-      asChild
-    >
-      {/* ✅ 2. El TouchableOpacity ahora solo se encarga de la parte visual.
-             No necesita su propio onPress. */}
-      <TouchableOpacity style={styles.itemContainer}>
-        <Card containerStyle={styles.card}>
-            <Card.Title>{item.title || `Lista de Compras`}</Card.Title>
-            <Text>Presupuesto: ${item.min_budget || 0} - ${item.max_budget || 0}</Text>
-            <Text>Fecha de Despacho: {item.expires_at ? new Date(item.expires_at).toLocaleDateString() : 'No especificada'}</Text>
-        </Card>
-      </TouchableOpacity>
-    </Link>
-  );
-
   return (
     <View style={styles.container}>
+      <ButtonGroup
+        buttons={['Activas', 'Cerradas']}
+        selectedIndex={selectedIndex}
+        onPress={(value) => setSelectedIndex(value)}
+        containerStyle={styles.buttonGroupContainer}
+        selectedButtonStyle={{ backgroundColor: COLORS.primary }}
+      />
       <FlatList
         data={lists}
-        renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={styles.emptyText}>No hay listas de compras activas.</Text>}
+        onRefresh={refresh}
+        refreshing={loading}
+        ListEmptyComponent={
+            <View style={styles.centered}>
+                <Text style={styles.emptyText}>No hay listas en esta categoría.</Text>
+            </View>
+        }
+        renderItem={({ item }) => (
+          <Link 
+            href={{
+              pathname: "/(seller)/(listas)/list-details/[id]",
+              params: { id: item.id }
+            }}
+            asChild
+          >
+            <TouchableOpacity>
+              {/* ✅ Usamos nuestro nuevo componente de tarjeta para vendedor */}
+              <SellerListItem list={item} />
+            </TouchableOpacity>
+          </Link>
+        )}
       />
     </View>
   );
 }
 
-// Estilos
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { textAlign: 'center', marginTop: 50 },
-  card: { borderRadius: 10, width: '100%', margin: 0 },
-  itemContainer: { paddingHorizontal: 15, paddingVertical: 5 },
-  itemTitle: { fontSize: 18, fontWeight: 'bold' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 50 },
+  buttonGroupContainer: {
+    marginHorizontal: 15,
+    marginVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: COLORS.gray,
+  },
 });

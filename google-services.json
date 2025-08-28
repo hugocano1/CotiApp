@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "804886255220",
+    "project_id": "cotiapp-ff423",
+    "storage_bucket": "cotiapp-ff423.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:804886255220:android:4a7907a0df8e16b1dfe321",
+        "android_client_info": {
+          "package_name": "com.hugocano.cotiap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFPFKgPX-gmLJsjftZHwQHrHtUKE_fjnI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

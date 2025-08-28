@@ -1,9 +1,9 @@
-// src/hooks/useBuyerOrders.ts
+// Ruta: src/hooks/useBuyerOrders.ts
 import { useState, useCallback } from 'react';
 import { supabase } from '../services/auth/config/supabaseClient';
 import { useFocusEffect } from '@react-navigation/native';
 
-export function useBuyerOrders() {
+export function useBuyerOrders(statusFilter: 'active' | 'history' | null) {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -13,27 +13,39 @@ export function useBuyerOrders() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado.");
 
-      // --- ✅ CONSULTA FINAL Y CORREGIDA ---
-      const { data, error } = await supabase
+      let query = supabase
         .from('orders')
         .select(`
           *,
-          seller_profiles:seller_id ( nombre ),
+          seller_profiles:seller_id (
+            nombre,
+            foto_perfil,
+            calificacion_vendedor,
+            stores ( name )
+          ),
           shopping_lists:shopping_list_id ( title )
         `)
-        .eq('buyer_id', user.id)
-        .order('created_at', { ascending: false });
+        .eq('buyer_id', user.id);
 
-      if (error) {
-        throw error;
+      
+
+      if (statusFilter) {
+        const statuses = statusFilter === 'active'
+          ? ['confirmed', 'enviado']
+          : ['completed'];
+        query = query.in('status', statuses);
       }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) throw error;
       setOrders(data || []);
     } catch (error) {
       console.error("Error fetching buyer orders:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [statusFilter]);
 
   useFocusEffect(useCallback(() => { fetchOrders(); }, [fetchOrders]));
 

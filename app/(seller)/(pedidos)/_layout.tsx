@@ -1,25 +1,29 @@
-// app/(seller)/(pedidos)/_layout.tsx
+// Ruta: app/(seller)/(pedidos)/_layout.tsx
 import { Stack } from 'expo-router';
-import { COLORS } from '../../../src/constants/colors'; // Asegúrate que la ruta sea correcta
+import { COLORS } from '../../../src/constants/colors';
 
 export default function SellerOrdersLayout() {
   return (
     <Stack
       screenOptions={{
-        // Estilos para el encabezado de esta sección
         headerStyle: {
-          backgroundColor: COLORS.primary, // Fondo Azul Profundo
+          backgroundColor: COLORS.primary,
         },
-        headerTintColor: COLORS.white, // Texto y flecha de atrás en blanco
+        headerTintColor: COLORS.white,
         headerTitleStyle: {
           fontWeight: 'bold',
         },
       }}
     >
-      {/* Ocultamos el header en la lista para que use el de la pestaña principal */}
-      <Stack.Screen name="index" options={{ headerShown: false }} /> 
+      {/* ✅ CORRECCIÓN: Ahora mostramos el header y le ponemos el título aquí */}
+      <Stack.Screen 
+        name="index" 
+        options={{ 
+          title: "Mis Pedidos",
+          headerShown: true 
+        }} 
+      /> 
 
-      {/* La pantalla de detalles sí tendrá este header */}
       <Stack.Screen 
         name="order-details/[id]" 
         options={{ title: "Detalles del Pedido" }} 

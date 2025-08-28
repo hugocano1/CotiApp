@@ -25,11 +25,13 @@ export function useUserProfile() {
     }
 
     const profileTable = userRole === 'buyer' ? 'buyer_profiles' : 'seller_profiles';
+    const selectQuery = userRole === 'buyer' ? '*' : '*, stores(*)';
+
 
     try {
       const { data, error } = await supabase
         .from(profileTable)
-        .select('*')
+        .select(selectQuery)
         .eq('user_id', session.user.id)
         .single();
 

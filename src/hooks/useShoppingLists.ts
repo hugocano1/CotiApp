@@ -3,18 +3,26 @@ import { useState, useCallback } from 'react';
 import { supabase } from '../services/auth/config/supabaseClient';
 import { useFocusEffect } from '@react-navigation/native';
 
+export type OfferSummary = {
+  id: string;
+  price: number;
+  shopping_list_id: string;
+  seller_profiles: {
+    stores: {
+      name: string;
+    }
+  }
+};
+
 export type ShoppingList = {
   id: string;
   title: string;
-  status: 'active' | 'pending' | 'completed';
+  status: 'active' | 'pending' | 'completed' | 'closed'; // Añadimos 'closed'
   created_at: string;
-  expires_at: string;
-  buyer_id: string;
   min_budget?: number;
   max_budget?: number;
-  items: Array<{ product_name: string; quantity: number; brand?: string }>;
-  // ✅ AÑADIDO: Tipo para el conteo de ofertas
-  offers: { count: number }[]; 
+  items: Array<{ name: string; quantity: number; unit: string }>;
+  offers: OfferSummary[];
 };
 
 export const useShoppingLists = (statusFilter: 'active' | 'completed' | null) => {
@@ -26,27 +34,25 @@ export const useShoppingLists = (statusFilter: 'active' | 'completed' | null) =>
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) throw new Error('Usuario no autenticado');
 
-      // ✅ CORRECCIÓN: Modificamos la consulta para incluir el conteo de ofertas
       let query = supabase
         .from('shopping_lists')
-        .select(`
-          *,
-          offers (count)
-        `)
+        .select(`*, offers (id, price, shopping_list_id, seller_profiles (stores (name)))`)
         .eq('buyer_id', user.id);
-      
+
+      // ✅ CORRECCIÓN DE LÓGICA DE FILTRADO
       if (statusFilter) {
-        const statuses = statusFilter === 'active' ? ['active', 'pending'] : ['completed'];
+        // 'Activas' son las que están en estado 'active'.
+        // 'Historial' son las 'closed' o 'completed'.
+        const statuses = statusFilter === 'active' ? ['active'] : ['closed', 'completed'];
         query = query.in('status', statuses);
       }
 
       const { data: lists, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      setData(lists as ShoppingList[] || []); // Hacemos un cast al tipo correcto
+      setData(lists as ShoppingList[] || []);
     } catch (err) {
       setError(err as Error);
     } finally {
@@ -54,11 +60,7 @@ export const useShoppingLists = (statusFilter: 'active' | 'completed' | null) =>
     }
   }, [statusFilter]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchLists();
-    }, [fetchLists])
-  );
+  useFocusEffect(useCallback(() => { fetchLists(); }, [fetchLists]));
 
   return { data, loading, error, refresh: fetchLists };
 };
