@@ -6,6 +6,7 @@ import { Link } from 'expo-router';
 import { COLORS } from '../../../src/constants/colors';
 import { ShoppingListItem } from '../../../src/components/ShoppingListItem';
 import { ButtonGroup, Icon } from '@rneui/themed';
+import { scaleFont } from '../../../src/utils/responsive';
 
 const cardColors = [COLORS.secondary, COLORS.accent, '#e76f51', '#f4a261', '#2a9d8f'];
 
@@ -48,7 +49,7 @@ export default function MisListasScreen() {
         onPress={(value) => setSelectedIndex(value)}
         containerStyle={styles.buttonGroupContainer}
         selectedButtonStyle={{ backgroundColor: COLORS.primary }}
-        textStyle={{ fontSize: 14 }}
+        textStyle={{ fontSize: scaleFont(14) }}
       />
 
       <FlatList
@@ -103,7 +104,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     borderRadius: 8,
   },
-  emptyText: { textAlign: 'center', fontSize: 16, color: COLORS.gray },
+  emptyText: { textAlign: 'center', fontSize: scaleFont(16), color: COLORS.gray },
   listItemContainer: {
     marginBottom: 20,
   },
@@ -133,14 +134,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   offerStore: {
-    fontSize: 12,
+    fontSize: scaleFont(12),
     fontWeight: '600',
     color: COLORS.white,
     marginLeft: 5,
     flexShrink: 1,
   },
   offerPrice: {
-    fontSize: 14,
+    fontSize: scaleFont(14),
     fontWeight: 'bold',
     color: COLORS.white,
   },

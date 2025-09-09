@@ -5,6 +5,7 @@ import { useLocalSearchParams, Link } from 'expo-router';
 import { Card, Button, Icon } from '@rneui/themed';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
 import { COLORS } from '../../../../src/constants/colors';
+import { scaleFont } from '../../../../src/utils/responsive';
 
 export default function BuyerListDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -88,15 +89,15 @@ const InfoRow = ({ icon, text, value }: any) => (
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', padding: 20, color: COLORS.primary },
+    header: { fontSize: scaleFont(24), fontWeight: 'bold', textAlign: 'center', padding: 20, color: COLORS.primary },
     card: { borderRadius: 12, marginHorizontal: 15, marginBottom: 15 },
     viewOffersButton: { backgroundColor: COLORS.secondary, margin: 20, borderRadius: 10, paddingVertical: 12 },
     infoRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 5 },
-    infoTextLabel: { marginLeft: 10, fontSize: 16, color: COLORS.gray },
-    infoTextValue: { marginLeft: 5, fontSize: 16, color: COLORS.text, fontWeight: '500' },
+    infoTextLabel: { marginLeft: 10, fontSize: scaleFont(16), color: COLORS.gray },
+    infoTextValue: { marginLeft: 5, fontSize: scaleFont(16), color: COLORS.text, fontWeight: '500' },
     itemContainer: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-    itemName: { fontSize: 16, fontWeight: 'bold', color: COLORS.text, marginBottom: 5 },
+    itemName: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.text, marginBottom: 5 },
     itemDetailsRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
-    itemDetailText: { fontSize: 14, color: COLORS.gray, marginRight: 10 },
-    itemNotes: { fontSize: 14, color: COLORS.accent, fontStyle: 'italic', marginTop: 5, marginLeft: 5 }
+    itemDetailText: { fontSize: scaleFont(14), color: COLORS.gray, marginRight: 10 },
+    itemNotes: { fontSize: scaleFont(14), color: COLORS.accent, fontStyle: 'italic', marginTop: 5, marginLeft: 5 }
 });

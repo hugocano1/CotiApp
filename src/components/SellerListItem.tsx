@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, Avatar, Icon } from '@rneui/themed';
 import { COLORS } from '../constants/colors';
+import { scaleFont } from '../utils/responsive';
 
 const InfoRow = ({ iconName, text }: { iconName: any; text: string | number }) => (
   <View style={styles.infoRow}>
@@ -22,13 +23,11 @@ export function SellerListItem({ list }: { list: any }) {
   return (
     <Card containerStyle={styles.card}>
       <View style={styles.contentContainer}>
-        {/* ✅ ENVOLVEMOS EL AVATAR EN UN VIEW PARA FORZAR EL ESTILO */}
         <View style={styles.avatarContainer}>
             <Avatar
                 size={64}
                 rounded
                 source={displayAvatar ? { uri: displayAvatar } : undefined}
-                // ✅ SOLO MOSTRAMOS EL TÍTULO SI NO HAY IMAGEN
                 title={!displayAvatar ? displayName.substring(0, 2).toUpperCase() : undefined}
                 imageProps={{ style: { resizeMode: 'cover' } }}
             />
@@ -50,21 +49,20 @@ export function SellerListItem({ list }: { list: any }) {
 const styles = StyleSheet.create({
   card: { borderRadius: 16, padding: 12, marginHorizontal: 15, marginBottom: 15, backgroundColor: COLORS.white, elevation: 3 },
   contentContainer: { flexDirection: 'row', alignItems: 'center' },
-  // ✅ AÑADIMOS EL ESTILO DEL CONTENEDOR DEL AVATAR
   avatarContainer: {
     width: 64,
     height: 64,
-    borderRadius: 32, // La mitad del tamaño para que sea un círculo perfecto
+    borderRadius: 32,
     marginRight: 12,
     backgroundColor: COLORS.primary,
-    overflow: 'hidden', // La clave para recortar la imagen
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
   },
   infoContainer: { flex: 1 },
-  title: { fontSize: 16, fontWeight: 'bold', color: COLORS.text, marginBottom: 2 },
-  subtitle: { fontSize: 13, color: COLORS.gray, marginBottom: 8 },
+  title: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.text, marginBottom: 2 },
+  subtitle: { fontSize: scaleFont(13), color: COLORS.gray, marginBottom: 8 },
   metadataContainer: { flexDirection: 'row', flexWrap: 'wrap' },
   infoRow: { flexDirection: 'row', alignItems: 'center', marginRight: 12, marginBottom: 4 },
-  infoText: { marginLeft: 5, fontSize: 12, color: COLORS.text },
+  infoText: { marginLeft: 5, fontSize: scaleFont(12), color: COLORS.text },
 });

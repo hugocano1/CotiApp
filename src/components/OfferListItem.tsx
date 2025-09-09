@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, Avatar } from '@rneui/themed';
 import { COLORS } from '../constants/colors';
+import { scaleFont } from '../utils/responsive';
 
 const statusConfig = {
   accepted: { text: 'Aceptada', color: COLORS.secondary },
@@ -30,7 +31,6 @@ export function OfferListItem({ offer }: { offer: any }) {
           />
         </View>
         <View style={styles.infoContainer}>
-            {/* ✅ CORRECCIÓN: Separamos el título en dos líneas */}
             <View>
               <Text style={styles.titlePrefix}>Oferta para:</Text>
               <Text style={styles.title} numberOfLines={1}>{displayName}</Text>
@@ -51,23 +51,22 @@ const styles = StyleSheet.create({
   contentContainer: { flexDirection: 'row', alignItems: 'center' },
   avatarContainer: { width: 64, height: 64, borderRadius: 32, marginRight: 12, backgroundColor: COLORS.primary, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
   infoContainer: { flex: 1, justifyContent: 'center' },
-  // ✅ ESTILOS AÑADIDOS/MODIFICADOS
   titlePrefix: {
-    fontSize: 13,
+    fontSize: scaleFont(13),
     color: COLORS.gray,
   },
   title: { 
-    fontSize: 16, 
+    fontSize: scaleFont(16), 
     fontWeight: 'bold', 
     color: COLORS.text,
   },
   subtitle: { 
-    fontSize: 13, 
+    fontSize: scaleFont(13), 
     color: COLORS.gray, 
     marginTop: 4, 
     marginBottom: 6 
   },
-  price: { fontSize: 16, fontWeight: 'bold', color: COLORS.secondary },
+  price: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.secondary },
   statusBadge: { position: 'absolute', top: -12, right: -12, paddingHorizontal: 10, paddingVertical: 4, borderTopRightRadius: 16, borderBottomLeftRadius: 12 },
-  statusText: { color: COLORS.white, fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
+  statusText: { color: COLORS.white, fontSize: scaleFont(10), fontWeight: 'bold', textTransform: 'uppercase' },
 });

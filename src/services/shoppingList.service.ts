@@ -8,8 +8,9 @@ export class ShoppingListService {
     items: any[];
     delivery_type: 'delivery' | 'pickup';
     delivery_date?: Date;
-    min_budget?: number; // ✅ AÑADIDO
-    max_budget?: number; // ✅ AÑADIDO
+    min_budget?: number; 
+    max_budget?: number; 
+    delivery_address_text?: string; // AÑADIDO
   }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Usuario no autenticado.");
@@ -29,8 +30,9 @@ export class ShoppingListService {
       status: 'active',
       delivery_type: listData.delivery_type,
       delivery_date: listData.delivery_date?.toISOString(),
-      min_budget: listData.min_budget, // ✅ AÑADIDO
-      max_budget: listData.max_budget, // ✅ AÑADIDO
+      min_budget: listData.min_budget, 
+      max_budget: listData.max_budget, 
+      delivery_address_text: listData.delivery_address_text, // AÑADIDO
     });
 
     if (error) {
@@ -52,12 +54,12 @@ export class ShoppingListService {
     return data;
   }
 
-  // 👇 FUNCIÓN AÑADIDA 👇
   static async getOfferDetails(offerId: string) {
     const { data, error } = await supabase
       .from('offers')
       .select(`
         *,
+        offer_items(*),
         shopping_lists (
           *,
           buyer:buyer_profiles (
@@ -97,11 +99,10 @@ export class ShoppingListService {
     total_price: number;
     notes?: string;
   }) {
-    // En la función createOffer
     const { error } = await supabase.rpc('submit_offer_and_notify', {
-    shopping_list_id_arg: String(offerData.shopping_list_id), // Forzar a String
-    price_arg: Number(offerData.total_price), // Forzar a Number
-    notes_arg: String(offerData.notes || ''), // Forzar a String, evitar undefined
+    shopping_list_id_arg: String(offerData.shopping_list_id), 
+    price_arg: Number(offerData.total_price), 
+    notes_arg: String(offerData.notes || ''), 
 });
 
     if (error) {
@@ -120,7 +121,7 @@ export class ShoppingListService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Usuario no autenticado.");
 
-    // Step 1: Create the main offer to get an ID
+    // 1. Insert the main offer
     const { data: offerData, error: offerError } = await supabase
       .from('offers')
       .insert({
@@ -140,22 +141,23 @@ export class ShoppingListService {
 
     const offer_id = offerData.id;
 
-    // Step 2: Prepare and insert the offer items
+    // 2. Prepare the offer items with the new offer_id and the original list_item_id
     const offerItems = data.items.map(item => ({
       offer_id: offer_id,
-      list_item_id: item.id, // Assuming the item from the shopping list has an 'id'
+      list_item_id: item.id, // ✅ This was the missing field
       item_name: item.name,
       quantity: item.quantity,
+      unit: item.unit,
+      brand: item.brand,
       unit_price: item.price,
-      unit: item.unit, // Added
-      brand: item.brand, // Added
     }));
 
+    // 3. Insert the detailed items
     const { error: itemsError } = await supabase.from('offer_items').insert(offerItems);
 
     if (itemsError) {
       console.error('Error creating offer items:', itemsError);
-      // Optional: Attempt to delete the offer if items fail
+      // If items fail, roll back the main offer to avoid incomplete data
       await supabase.from('offers').delete().eq('id', offer_id);
       throw new Error(itemsError.message);
     }

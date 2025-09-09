@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useOrderDetails } from '../../../../src/hooks/useOrderDetails';
 import { OrderService } from '../../../../src/services/order.service';
 import { COLORS } from '../../../../src/constants/colors';
+import { scaleFont } from '../../../../src/utils/responsive';
 
 const RatingModal = ({ isVisible, onClose, orderId, ratedUserId }: any) => {
   const [view, setView] = useState<'rating' | 'success'>('rating');
@@ -127,10 +128,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   card: { borderRadius: 12, marginHorizontal: 15, marginBottom: 15 },
   statusContainer: { alignItems: 'center', paddingVertical: 10 },
-  price: { fontSize: 22, fontWeight: 'bold', marginVertical: 10 },
+  price: { fontSize: scaleFont(22), fontWeight: 'bold', marginVertical: 10 },
   infoText: { textAlign: 'center', color: COLORS.gray, fontStyle: 'italic', padding: 10},
   modalView: { backgroundColor: COLORS.primary, borderRadius: 20, padding: 35, alignItems: 'center', width: '90%' },
-  headerModal: { fontSize: 22, fontWeight: 'bold', color: COLORS.white, marginBottom: 10, textAlign: 'center' },
-  // ✅ CORRECCIÓN: Cambiado 'hundred%' por '100%'
+  headerModal: { fontSize: scaleFont(22), fontWeight: 'bold', color: COLORS.white, marginBottom: 10, textAlign: 'center' },
   starsContainer: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', marginVertical: 20 },
 });

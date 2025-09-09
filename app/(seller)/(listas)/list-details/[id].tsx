@@ -5,6 +5,7 @@ import { useLocalSearchParams, Link } from 'expo-router';
 import { Card, Button, Icon } from '@rneui/themed';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
 import { COLORS } from '../../../../src/constants/colors';
+import { scaleFont } from '../../../../src/utils/responsive';
 
 export default function SellerListDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -108,24 +109,24 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   headerContainer: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 10, backgroundColor: COLORS.white },
-  header: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', color: COLORS.primary, flexShrink: 1 },
-  buyerName: { fontSize: 13, textAlign: 'center', color: COLORS.gray, marginTop: 4 },
+  header: { fontSize: scaleFont(20), fontWeight: 'bold', textAlign: 'center', color: COLORS.primary, flexShrink: 1 },
+  buyerName: { fontSize: scaleFont(13), textAlign: 'center', color: COLORS.gray, marginTop: 4 },
   card: { borderRadius: 12, marginHorizontal: 15, marginTop: 15, paddingBottom: 10 },
-  cardTitle: { fontSize: 16, color: COLORS.primary },
-  sectionHeader: { fontSize: 16, fontWeight: '600', color: COLORS.text, marginHorizontal: 20, marginTop: 20, marginBottom: 5 },
+  cardTitle: { fontSize: scaleFont(16), color: COLORS.primary },
+  sectionHeader: { fontSize: scaleFont(16), fontWeight: '600', color: COLORS.text, marginHorizontal: 20, marginTop: 20, marginBottom: 5 },
   infoRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
-  infoTextLabel: { marginLeft: 10, fontSize: 14, color: COLORS.gray },
-  infoTextValue: { marginLeft: 5, fontSize: 14, color: COLORS.text, fontWeight: '500' },
+  infoTextLabel: { marginLeft: 10, fontSize: scaleFont(14), color: COLORS.gray },
+  infoTextValue: { marginLeft: 5, fontSize: scaleFont(14), color: COLORS.text, fontWeight: '500' },
   itemCard: { borderRadius: 10, marginHorizontal: 30, marginBottom: 4, padding: 12 },
   itemCardRow: { flexDirection: 'row', alignItems: 'center' },
   itemDetailsColumn: { flex: 1, paddingRight: 10 },
   itemQuantityColumn: { alignItems: 'center', justifyContent: 'center', paddingLeft: 10, borderLeftWidth: 1, borderLeftColor: COLORS.grayLight },
-  itemName: { fontSize: 15, fontWeight: '600', color: COLORS.text, marginBottom: 6 },
+  itemName: { fontSize: scaleFont(15), fontWeight: '600', color: COLORS.text, marginBottom: 6 },
   metaItem: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  itemMetaText: { fontSize: 12, color: COLORS.gray, marginLeft: 5 },
-  itemNotes: { fontSize: 12, color: COLORS.accent, fontStyle: 'italic', marginLeft: 5 },
-  itemQuantityText: { fontSize: 18, fontWeight: 'bold', color: COLORS.primary },
-  itemUnitText: { fontSize: 12, color: COLORS.gray },
+  itemMetaText: { fontSize: scaleFont(12), color: COLORS.gray, marginLeft: 5 },
+  itemNotes: { fontSize: scaleFont(12), color: COLORS.accent, fontStyle: 'italic', marginLeft: 5 },
+  itemQuantityText: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.primary },
+  itemUnitText: { fontSize: scaleFont(12), color: COLORS.gray },
   footer: { padding: 15, backgroundColor: '#ffffff' },
   actionButton: { backgroundColor: COLORS.secondary, borderRadius: 10, paddingVertical: 10 },
 });

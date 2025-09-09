@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ShoppingListService } from '../../../src/services/shoppingList.service';
 import { COLORS } from '../../../src/constants/colors';
 import { Button, Card, Icon } from '@rneui/themed';
+import { scaleFont } from '../../../src/utils/responsive';
 
 interface ListItem {
   id: string;
@@ -112,7 +113,6 @@ export default function CreateOfferScreen() {
   const renderItem = ({ item }: { item: ListItem }) => (
     <Card containerStyle={styles.itemCard}>
         <View style={styles.cardRow}>
-            {/* Columna Izquierda (Detalles) */}
             <View style={styles.itemDetailsColumn}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 
@@ -137,7 +137,6 @@ export default function CreateOfferScreen() {
                 )}
             </View>
 
-            {/* Columna Derecha (Precio) */}
             <View style={styles.priceInputColumn}>
                 <TextInput
                     style={styles.priceInput}
@@ -191,23 +190,23 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 10, backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.grayLight },
-  title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', color: COLORS.primary },
-  buyerName: { fontSize: 14, textAlign: 'center', color: COLORS.gray, marginTop: 4 },
+  title: { fontSize: scaleFont(22), fontWeight: 'bold', textAlign: 'center', color: COLORS.primary },
+  buyerName: { fontSize: scaleFont(14), textAlign: 'center', color: COLORS.gray, marginTop: 4 },
   list: { flex: 1 },
   itemCard: { borderRadius: 12, marginHorizontal: 10, marginBottom: 10, padding: 0 },
   cardRow: { flexDirection: 'row', padding: 15 },
   itemDetailsColumn: { flex: 1, paddingRight: 10 },
   priceInputColumn: { alignItems: 'flex-end', justifyContent: 'center' },
-  itemName: { fontSize: 18, fontWeight: '600', color: COLORS.text, marginBottom: 12 },
+  itemName: { fontSize: scaleFont(18), fontWeight: '600', color: COLORS.text, marginBottom: 12 },
   metaContainer: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 },
   metaItem: { flexDirection: 'row', alignItems: 'center', marginRight: 12, marginBottom: 4 },
-  itemMetaText: { fontSize: 14, color: COLORS.gray, marginLeft: 4 },
+  itemMetaText: { fontSize: scaleFont(14), color: COLORS.gray, marginLeft: 4 },
   notesContainer: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#fffbe6', borderRadius: 8, padding: 10, marginTop: 5 },
-  itemNotes: { fontStyle: 'italic', color: '#856404', marginLeft: 8, fontSize: 13, flex: 1 },
-  priceInput: { height: 50, width: 110, borderColor: COLORS.gray, borderWidth: 1, paddingHorizontal: 10, borderRadius: 8, backgroundColor: COLORS.white, textAlign: 'right', fontSize: 18, fontWeight: 'bold' },
-  priceLabel: { fontSize: 12, color: COLORS.gray, marginTop: 4 },
+  itemNotes: { fontStyle: 'italic', color: '#856404', marginLeft: 8, fontSize: scaleFont(13), flex: 1 },
+  priceInput: { height: 50, width: 110, borderColor: COLORS.gray, borderWidth: 1, paddingHorizontal: 10, borderRadius: 8, backgroundColor: COLORS.white, textAlign: 'right', fontSize: scaleFont(18), fontWeight: 'bold' },
+  priceLabel: { fontSize: scaleFont(12), color: COLORS.gray, marginTop: 4 },
   summaryContainer: { padding: 15, borderTopWidth: 2, borderTopColor: COLORS.grayLight, backgroundColor: COLORS.white, elevation: 10, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10 },
-  totalText: { fontSize: 20, fontWeight: 'bold', textAlign: 'right', marginBottom: 10, color: COLORS.primary },
+  totalText: { fontSize: scaleFont(20), fontWeight: 'bold', textAlign: 'right', marginBottom: 10, color: COLORS.primary },
   notesInput: { height: 70, textAlignVertical: 'top', borderColor: COLORS.gray, borderWidth: 1, padding: 10, borderRadius: 8, marginBottom: 10, backgroundColor: '#f8f9fa' },
   button: { borderRadius: 8, paddingVertical: 12 },
 });

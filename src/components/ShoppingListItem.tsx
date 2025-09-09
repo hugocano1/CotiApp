@@ -5,6 +5,7 @@ import { Card } from '@rneui/themed';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../constants/colors';
 import { ShoppingList } from '../hooks/useShoppingLists';
+import { scaleFont } from '../utils/responsive';
 
 type Props = {
   list: ShoppingList;
@@ -60,10 +61,10 @@ const styles = StyleSheet.create({
     imagePlaceholder: { width: 80, height: 80, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f2f5', borderRadius: 12, marginRight: 12 },
     infoContainer: { flex: 1, height: 80, justifyContent: 'space-between' },
     headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    title: { fontSize: 16, fontWeight: 'bold', color: COLORS.text, flex: 1, marginRight: 4 },
+    title: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.text, flex: 1, marginRight: 4 },
     statusBadge: { backgroundColor: COLORS.secondary, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-    statusText: { color: COLORS.white, fontSize: 10, fontWeight: 'bold' },
+    statusText: { color: COLORS.white, fontSize: scaleFont(10), fontWeight: 'bold' },
     metadataContainer: { flexDirection: 'row', flexWrap: 'wrap' },
     infoRow: { flexDirection: 'row', alignItems: 'center', marginRight: 10, marginBottom: 5 },
-    infoText: { marginLeft: 6, fontSize: 13, color: COLORS.gray },
+    infoText: { marginLeft: 6, fontSize: scaleFont(13), color: COLORS.gray },
 });

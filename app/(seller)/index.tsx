@@ -10,6 +10,7 @@ import { useSellerOffers } from '../../src/hooks/useSellerOffers';
 import { useUserProfile } from '../../src/hooks/useUserProfile';
 import { OrderListItem } from '../../src/components/OrderListItem';
 import { OfferListItem } from '../../src/components/OfferListItem';
+import { scaleFont } from '../../src/utils/responsive';
 
 const SectionHeader = ({ title, onPress }: { title: string, onPress: () => void }) => (
     <View style={styles.sectionHeader}>
@@ -25,8 +26,8 @@ export default function SellerHomeScreen() {
     const navigation = useNavigation();
     const { profile } = useUserProfile();
     
-    // ✅ CORRECCIÓN: Usamos el filtro correcto. "Por despachar" solo es 'confirmed'.
-    const { orders: pendingOrders, loading: ordersLoading } = useSellerOrders(['confirmed']);
+    const { orders: allOrders, loading: ordersLoading, error: ordersError } = useSellerOrders();
+    const pendingOrders = allOrders.filter(order => order.status === 'confirmed');
     
     const { offers: recentOffers, loading: offersLoading } = useSellerOffers(3);
 
@@ -61,8 +62,9 @@ export default function SellerHomeScreen() {
                         />
                     </Link>
 
-                    <SectionHeader title="Pedidos por Despachar" onPress={() => router.push('/(seller)/(pedidos)')} />
-                    {ordersLoading ? (
+                    <SectionHeader title="Pedidos por despachar" onPress={() => router.push('/(seller)/(pedidos)')} />
+                    {ordersError && <Text style={{ color: 'red', textAlign: 'center', margin: 10 }}>Error al cargar pedidos: {ordersError.message}</Text>}
+                    {ordersLoading && allOrders.length === 0 ? (
                         <ActivityIndicator style={{ marginTop: 20 }} /> 
                     ) : pendingOrders.length > 0 ? (
                         pendingOrders.map(order => (
@@ -104,12 +106,12 @@ const styles = StyleSheet.create({
     promoImageContainer: { height: 180, backgroundColor: COLORS.primary },
     promoImage: { width: '100%', height: '100%', resizeMode: 'cover' },
     contentContainer: { paddingTop: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20, marginTop: -20, backgroundColor: COLORS.background },
-    panelTitle: { fontSize: 22, fontWeight: 'bold', color: COLORS.primary, textAlign: 'center' },
-    subtitle: { fontSize: 14, color: COLORS.gray, marginTop: 4, textAlign: 'center', marginBottom: 15, paddingHorizontal: 10 },
+    panelTitle: { fontSize: scaleFont(22), fontWeight: 'bold', color: COLORS.primary, textAlign: 'center' },
+    subtitle: { fontSize: scaleFont(14), color: COLORS.gray, marginTop: 4, textAlign: 'center', marginBottom: 15, paddingHorizontal: 10 },
     mainButton: { backgroundColor: COLORS.accent, borderRadius: 12, marginHorizontal: 20, paddingVertical: 15 },
     mainButtonTitle: { color: COLORS.primary, fontWeight: 'bold' },
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginTop: 20, marginBottom: 10 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: COLORS.text },
+    sectionTitle: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.text },
     seeAllText: { color: COLORS.secondary, fontWeight: '500' },
     emptyText: { textAlign: 'center', color: COLORS.gray, margin: 20 },
     cardSpacing: { marginTop: -3 },

@@ -14,7 +14,7 @@ export default function ListasStackLayout() {
       <Stack.Screen name="index" options={{ title: 'Listas Disponibles' }} />
       <Stack.Screen name="list-details/[id]" options={{ title: "Detalles de la Lista" }} />
       {/* ✅ AÑADIMOS LA PANTALLA PARA CREAR OFERTA */}
-      <Stack.Screen name="create-offer" options={{ title: "Crear Nueva Oferta" }} />
+      <Stack.Screen name="create-offer" options={{ title: "Crear Nueva Oferta", presentation: 'modal' }} />
     </Stack>
   );
 }

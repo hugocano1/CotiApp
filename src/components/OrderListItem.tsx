@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, Avatar, Icon } from '@rneui/themed';
 import { COLORS } from '../constants/colors';
+import { scaleFont } from '../utils/responsive';
 
 type Props = {
   order: any;
@@ -45,7 +46,6 @@ export function OrderListItem({ order, userRole }: Props) {
         </View>
         <View style={styles.infoContainer}>
           <View style={styles.topRow}>
-            {/* ✅ CORRECCIÓN: Título dividido en dos líneas */}
             <View style={styles.titleContainer}>
               <Text style={styles.titlePrefix}>
                 {isBuyer ? `Pedido a:` : `Pedido de:`}
@@ -118,17 +118,17 @@ const styles = StyleSheet.create({
   titleContainer: {
     flex: 1,
   },
-  titlePrefix: { // ✅ Estilo para "Pedido de:"
-    fontSize: 13,
+  titlePrefix: { 
+    fontSize: scaleFont(13),
     color: COLORS.gray,
   },
   title: {
-    fontSize: 16,
+    fontSize: scaleFont(16),
     fontWeight: 'bold',
     color: COLORS.text,
   },
   subtitle: { 
-    fontSize: 13, 
+    fontSize: scaleFont(13), 
     color: COLORS.text,
     marginTop: 4,
     marginBottom: 8,
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   price: { 
-    fontSize: 16, 
+    fontSize: scaleFont(16), 
     fontWeight: 'bold', 
     color: COLORS.secondary,
   },
@@ -153,18 +153,18 @@ const styles = StyleSheet.create({
   },
   ratingText: { 
     marginLeft: 4, 
-    fontSize: 12, 
+    fontSize: scaleFont(12), 
     fontWeight: 'bold' 
   },
   statusBadge: { 
     paddingHorizontal: 8, 
     paddingVertical: 4, 
     borderRadius: 8,
-    marginLeft: 8, // Espacio para que no choque con el texto
+    marginLeft: 8,
   },
   statusText: { 
     color: COLORS.white, 
-    fontSize: 10, 
+    fontSize: scaleFont(10), 
     fontWeight: 'bold', 
     textTransform: 'uppercase' 
   },

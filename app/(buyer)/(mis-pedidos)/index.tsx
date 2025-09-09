@@ -6,6 +6,7 @@ import { Link } from 'expo-router';
 import { COLORS } from '../../../src/constants/colors';
 import { OrderListItem } from '../../../src/components/OrderListItem';
 import { ButtonGroup } from '@rneui/themed';
+import { scaleFont } from '../../../src/utils/responsive';
 
 export default function BuyerOrdersScreen() {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -24,7 +25,7 @@ export default function BuyerOrdersScreen() {
         onPress={(value) => setSelectedIndex(value)}
         containerStyle={styles.buttonGroupContainer}
         selectedButtonStyle={{ backgroundColor: COLORS.primary }}
-        textStyle={{ fontSize: 14 }}
+        textStyle={{ fontSize: scaleFont(14) }}
       />
       <FlatList
         data={orders}
@@ -56,7 +57,7 @@ export default function BuyerOrdersScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { textAlign: 'center', marginTop: 50, fontSize: 16, color: COLORS.gray },
+  emptyText: { textAlign: 'center', marginTop: 50, fontSize: scaleFont(16), color: COLORS.gray },
   buttonGroupContainer: {
     marginHorizontal: 'auto',
     width: '80%',

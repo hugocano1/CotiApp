@@ -6,9 +6,9 @@ import { Link } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../../src/services/auth/config/supabaseClient';
 import { COLORS } from '../../../src/constants/colors';
-import { SellerListItem } from '../../../src/components/SellerListItem'; // ✅ Importamos el nuevo componente
+import { SellerListItem } from '../../../src/components/SellerListItem';
+import { scaleFont } from '../../../src/utils/responsive';
 
-// Hook para cargar las listas con filtro
 function useAvailableLists(statusFilter: 'active' | 'closed') {
   const [lists, setLists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,6 @@ function useAvailableLists(statusFilter: 'active' | 'closed') {
   const fetchLists = useCallback(async () => {
     setLoading(true);
     try {
-      // ✅ CONSULTA MEJORADA: Traemos los datos del perfil del comprador
       const { data, error } = await supabase
         .from('shopping_lists')
         .select(`
@@ -80,7 +79,6 @@ export default function AvailableListsScreen() {
             asChild
           >
             <TouchableOpacity>
-              {/* ✅ Usamos nuestro nuevo componente de tarjeta para vendedor */}
               <SellerListItem list={item} />
             </TouchableOpacity>
           </Link>
@@ -102,7 +100,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: scaleFont(16),
     color: COLORS.gray,
   },
 });

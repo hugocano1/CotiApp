@@ -6,6 +6,7 @@ import { Input, Button, Icon, BottomSheet, ListItem, ButtonGroup } from '@rneui/
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS } from '../../src/constants/colors';
 import { ShoppingListService } from '../../src/services/shoppingList.service';
+import { scaleFont } from '../../src/utils/responsive';
 
 type Item = { name: string; quantity: number; unit: string; brand?: string; notes?: string; };
 type DeliveryType = 'delivery' | 'pickup';
@@ -21,6 +22,7 @@ export default function CreateListScreen() {
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(new Date());
   const [deliveryTypeIndex, setDeliveryTypeIndex] = useState(0);
   const [items, setItems] = useState<Item[]>([]);
+  const [deliveryAddressText, setDeliveryAddressText] = useState('');
   
   const [newItemName, setNewItemName] = useState('');
   const [newItemQty, setNewItemQty] = useState(1);
@@ -49,6 +51,7 @@ export default function CreateListScreen() {
   const handleSaveList = async () => {
     if (!listTitle.trim()) { Alert.alert('Error', 'Por favor, dale un nombre a tu lista.'); return; }
     if (items.length === 0) { Alert.alert('Error', 'Añade al menos un artículo a tu lista.'); return; }
+    if (deliveryTypeIndex === 0 && !deliveryAddressText.trim()) { Alert.alert('Error', 'Por favor, ingresa la dirección de despacho.'); return; }
 
     setLoading(true);
     try {
@@ -60,6 +63,7 @@ export default function CreateListScreen() {
         delivery_type: deliveryType,
         min_budget: parseFloat(minBudget) || undefined,
         max_budget: parseFloat(maxBudget) || undefined,
+        delivery_address_text: deliveryAddressText,
       });
       Alert.alert('¡Éxito!', 'Tu lista de compras ha sido creada y publicada.');
       router.back();
@@ -98,7 +102,6 @@ export default function CreateListScreen() {
                     keyboardType="numeric"
                     inputContainerStyle={styles.inputContainer}
                     inputStyle={styles.inputText}
-                    // ✅ 1. ICONO RESTAURADO
                     leftIcon={<Icon name="cash-minus" type="material-community" color={COLORS.gray}/>}
                 />
                 <Input
@@ -110,7 +113,6 @@ export default function CreateListScreen() {
                     keyboardType="numeric"
                     inputContainerStyle={styles.inputContainer}
                     inputStyle={styles.inputText}
-                    // ✅ 1. ICONO RESTAURADO
                     leftIcon={<Icon name="cash-plus" type="material-community" color={COLORS.gray}/>}
                 />
             </View>
@@ -133,6 +135,18 @@ export default function CreateListScreen() {
                 selectedTextStyle={{ color: COLORS.primary }}
             />
             
+            {deliveryTypeIndex === 0 && (
+                <Input
+                    placeholder="Dirección de Despacho"
+                    value={deliveryAddressText}
+                    onChangeText={setDeliveryAddressText}
+                    containerStyle={styles.inputOuterContainer}
+                    inputContainerStyle={styles.inputContainer}
+                    inputStyle={styles.inputText}
+                    leftIcon={<Icon name="map-marker" type="material-community" color={COLORS.gray}/>}
+                />
+            )}
+
             <View style={styles.addItemContainer}>
                 <Text style={styles.subHeader}>Añadir Artículo</Text>
                 <Input placeholder="Nombre del producto" value={newItemName} onChangeText={setNewItemName} inputContainerStyle={styles.inputContainer} inputStyle={styles.inputText} />
@@ -188,29 +202,28 @@ const styles = StyleSheet.create({
     promoBanner: { height: 120, backgroundColor: COLORS.primary },
     promoImage: { width: '100%', height: '100%', resizeMode: 'cover' },
     formContainer: { padding: 15, borderTopLeftRadius: 20, borderTopRightRadius: 20, marginTop: -20, backgroundColor: COLORS.background },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: COLORS.primary, marginBottom: 15 },
-    subHeader: { fontSize: 16, fontWeight: '500', color: COLORS.text, marginBottom: 10 },
-    label: { color: COLORS.text, fontWeight: '500', fontSize: 14, marginBottom: 5, paddingHorizontal: 10 },
+    sectionTitle: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.primary, marginBottom: 15 },
+    subHeader: { fontSize: scaleFont(16), fontWeight: '500', color: COLORS.text, marginBottom: 10 },
+    label: { color: COLORS.text, fontWeight: '500', fontSize: scaleFont(14), marginBottom: 5, paddingHorizontal: 10 },
     row: { flexDirection: 'row', alignItems: 'center' },
     inputOuterContainer: {
       paddingHorizontal: 0,
-      marginBottom: -7,
+      marginBottom: -5,
     },
     inputContainer: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, backgroundColor: COLORS.white, height: 48 },
-    // ✅ 2. MARGEN INTERNO PARA EL TEXTO
-    inputText: { fontSize: 14, paddingLeft: 10 },
+    inputText: { fontSize: scaleFont(14), paddingLeft: 10 },
     dateButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 14, marginBottom: 15 },
-    dateButtonText: { marginLeft: 10, fontSize: 14, color: COLORS.text },
+    dateButtonText: { marginLeft: 10, fontSize: scaleFont(14), color: COLORS.text },
     buttonGroupContainer: { height: 45, marginHorizontal: 0, marginBottom: 20, borderRadius: 12 },
     addItemContainer: { backgroundColor: COLORS.white, padding: 15, borderRadius: 12, marginVertical: 20, elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5 },
-    quantityContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-    quantityLabel: { fontSize: 14, color: COLORS.text, marginRight: 'auto' },
+    quantityContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+    quantityLabel: { fontSize: scaleFont(14), color: COLORS.text, marginRight: 'auto' },
     counter: { flexDirection: 'row', alignItems: 'center' },
-    quantityText: { fontSize: 18, fontWeight: 'bold', marginHorizontal: 12 },
+    quantityText: { fontSize: scaleFont(18), fontWeight: 'bold', marginHorizontal: 12 },
     unitSelector: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10 },
-    unitText: { fontSize: 14, marginRight: 5 },
+    unitText: { fontSize: scaleFont(14), marginRight: 5 },
     itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, backgroundColor: '#f9f9f9', borderWidth: 1, borderColor: '#eee', borderRadius: 8, marginBottom: 8 },
-    itemTextMain: { fontSize: 14, fontWeight: '500' },
-    itemTextSub: { fontSize: 12, color: COLORS.gray, marginTop: 2 },
+    itemTextMain: { fontSize: scaleFont(14), fontWeight: '500' },
+    itemTextSub: { fontSize: scaleFont(12), color: COLORS.gray, marginTop: 2 },
     saveButton: { backgroundColor: COLORS.primary, borderRadius: 10, paddingVertical: 12, marginTop: 20 },
 });

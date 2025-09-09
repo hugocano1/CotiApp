@@ -6,6 +6,7 @@ import { Card, Button, Icon } from '@rneui/themed';
 import { useListOffers } from '../../../../src/hooks/useListOffers';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
 import { COLORS } from '../../../../src/constants/colors';
+import { scaleFont } from '../../../../src/utils/responsive';
 
 // This component renders the new, detailed view for an offer
 const DetailedOfferView = ({ offer }: { offer: any }) => (
@@ -109,10 +110,10 @@ export default function ListOffersScreen() {
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 },
   container: { flex: 1, backgroundColor: COLORS.background },
-  header: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', paddingVertical: 20, color: COLORS.primary },
+  header: { fontSize: scaleFont(24), fontWeight: 'bold', textAlign: 'center', paddingVertical: 20, color: COLORS.primary },
   emptyText: { textAlign: 'center', color: COLORS.gray },
   card: { borderRadius: 12, marginBottom: 15 },
-  notes: { fontStyle: 'italic', color: COLORS.gray, textAlign: 'center', marginTop: 10, fontSize: 12 },
+  notes: { fontStyle: 'italic', color: COLORS.gray, textAlign: 'center', marginTop: 10, fontSize: scaleFont(12) },
   acceptButton: { backgroundColor: COLORS.secondary, marginTop: 15, borderRadius: 8 },
   // Styles for Detailed View
   itemRow: {
@@ -125,17 +126,17 @@ const styles = StyleSheet.create({
   },
   itemDetailsContainer: { flex: 1, paddingRight: 5 },
   itemName: {
-    fontSize: 15,
+    fontSize: scaleFont(15),
     fontWeight: '500',
     color: COLORS.text,
   },
   itemSubDetails: {
-      fontSize: 12,
+      fontSize: scaleFont(12),
       color: COLORS.gray,
       marginTop: 3,
   },
   itemPrice: {
-    fontSize: 15,
+    fontSize: scaleFont(15),
     fontWeight: 'bold',
     color: COLORS.text,
   },
@@ -146,12 +147,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   totalLabel: {
-    fontSize: 18,
+    fontSize: scaleFont(18),
     fontWeight: 'bold',
     color: COLORS.primary,
   },
   totalPrice: {
-    fontSize: 18,
+    fontSize: scaleFont(18),
     fontWeight: 'bold',
     color: COLORS.primary,
   },
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
       paddingVertical: 20,
   },
   simplePrice: {
-      fontSize: 28,
+      fontSize: scaleFont(28),
       fontWeight: 'bold',
       textAlign: 'center',
       color: COLORS.primary,

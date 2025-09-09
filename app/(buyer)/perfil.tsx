@@ -8,6 +8,7 @@ import { supabase } from '../../src/services/auth/config/supabaseClient';
 import { COLORS } from '../../src/constants/colors';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { scaleFont } from '../../src/utils/responsive';
 
 const InfoItem = ({ icon, text, value }: { icon: string, text: string, value: string | number }) => {
     return (
@@ -231,16 +232,16 @@ const styles = StyleSheet.create({
     header: { alignItems: 'center', padding: 20, backgroundColor: COLORS.primary, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, marginBottom: 10 },
     avatarContainer: { width: 124, height: 124, borderRadius: 62, borderWidth: 4, borderColor: COLORS.accent, backgroundColor: '#e1e1e1', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
     editIconContainer: { position: 'absolute', bottom: 0, right: 0, backgroundColor: COLORS.secondary, padding: 8, borderRadius: 20, borderWidth: 2, borderColor: COLORS.white },
-    name: { fontSize: 24, fontWeight: 'bold', color: COLORS.white, marginTop: 12 },
+    name: { fontSize: scaleFont(24), fontWeight: 'bold', color: COLORS.white, marginTop: 12 },
     ratingContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-    ratingText: { fontSize: 16, color: COLORS.white, opacity: 0.8, marginLeft: 5 },
+    ratingText: { fontSize: scaleFont(16), color: COLORS.white, opacity: 0.8, marginLeft: 5 },
     card: { borderRadius: 12, marginHorizontal: 15, marginBottom: 15 },
     infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
     infoCol: { marginLeft: 15, flex: 1 },
-    infoLabel: { color: COLORS.gray, fontSize: 12 },
-    infoValue: { color: COLORS.text, fontSize: 16 },
+    infoLabel: { color: COLORS.gray, fontSize: scaleFont(12) },
+    infoValue: { color: COLORS.text, fontSize: scaleFont(16) },
     editableRow: { paddingVertical: 10 },
-    infoInput: { fontSize: 16, borderBottomWidth: 1, borderBottomColor: COLORS.gray, paddingVertical: 5 },
+    infoInput: { fontSize: scaleFont(16), borderBottomWidth: 1, borderBottomColor: COLORS.gray, paddingVertical: 5 },
     buttonSection: { paddingHorizontal: 20, marginTop: 10 },
     logoutButtonTitle: { color: COLORS.danger, fontWeight: 'bold', padding: 20 },
     selectorButton: {
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
         marginTop: 10
     },
     selectorButtonText: {
-        fontSize: 16,
+        fontSize: scaleFont(16),
         marginLeft: 10,
         color: COLORS.text,
     },

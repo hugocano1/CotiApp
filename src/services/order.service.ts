@@ -11,7 +11,7 @@ export class OrderService {
       .from('orders')
       .select(`
         *,
-        shopping_lists ( title, items ),
+        shopping_lists ( title, items, delivery_date, delivery_type, delivery_address_text ),
         buyer_profiles:buyer_id ( nombre, apellido ),
         seller_profiles:seller_id ( nombre, stores ( name ) )
       `)
@@ -74,4 +74,4 @@ export class OrderService {
   }
 
 
-}   
+}

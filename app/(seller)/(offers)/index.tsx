@@ -3,8 +3,9 @@ import React from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { Link } from 'expo-router';
 import { COLORS } from '../../../src/constants/colors';
-import { useSellerOffers } from '../../../src/hooks/useSellerOffers'; // ✅ Usamos el nuevo hook
-import { OfferListItem } from '../../../src/components/OfferListItem'; // ✅ Usamos el nuevo componente
+import { useSellerOffers } from '../../../src/hooks/useSellerOffers';
+import { OfferListItem } from '../../../src/components/OfferListItem';
+import { scaleFont } from '../../../src/utils/responsive';
 
 export default function MisOfertasScreen() {
   const { offers, loading, refresh } = useSellerOffers();
@@ -42,6 +43,6 @@ export default function MisOfertasScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', padding: 20, color: COLORS.primary },
+  header: { fontSize: scaleFont(22), fontWeight: 'bold', textAlign: 'center', padding: 20, color: COLORS.primary },
   emptyText: { textAlign: 'center', marginTop: 50, color: COLORS.gray },
 });

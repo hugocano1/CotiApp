@@ -6,6 +6,7 @@ import { Link } from 'expo-router';
 import { COLORS } from '../../../src/constants/colors';
 import { OrderListItem } from '../../../src/components/OrderListItem';
 import { ButtonGroup } from '@rneui/themed';
+import { scaleFont } from '../../../src/utils/responsive';
 
 const FILTERS = {
   'En Curso': ['confirmed', 'enviado'],
@@ -20,7 +21,6 @@ export default function SellerOrdersScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Añadimos el componente de pestañas (tabs) */}
             <ButtonGroup
                 buttons={TABS}
                 selectedIndex={selectedIndex}
@@ -63,10 +63,10 @@ export default function SellerOrdersScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    emptyText: { textAlign: 'center', marginTop: 50, fontSize: 16 },
+    emptyText: { textAlign: 'center', marginTop: 50, fontSize: scaleFont(16) },
     buttonGroupContainer: {
         marginHorizontal: 15,
-        marginTop: 10, // Damos un poco de espacio arriba
+        marginTop: 10,
         borderRadius: 8,
     },
 });

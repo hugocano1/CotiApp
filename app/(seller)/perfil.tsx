@@ -7,6 +7,7 @@ import { useUserProfile } from '../../src/hooks/useUserProfile';
 import { supabase } from '../../src/services/auth/config/supabaseClient';
 import { COLORS } from '../../src/constants/colors';
 import * as ImagePicker from 'expo-image-picker';
+import { scaleFont } from '../../src/utils/responsive';
 
 const InfoItem = ({ icon, text, value }: { icon: string, text: string, value: string | number }) => (
     <View style={styles.infoRow}>
@@ -167,7 +168,7 @@ export default function SellerProfileScreen() {
                     <Card containerStyle={styles.card}>
                         <Card.Title>Información de la Tienda</Card.Title>
                         <Card.Divider />
-                        <InfoItem icon="store" text="Descripción" value={profile.store_description || 'No establecido'} />
+                        <Text style={styles.storeDescription}>{profile.store_description || 'No establecido'}</Text>
                         <InfoItem icon="map-marker-outline" text="Dirección" value={profile.stores?.direccion || 'No establecido'} />
                         <InfoItem icon="clock-outline" text="Horario" value={profile.stores?.horario_atencion || 'No establecido'} />
                         <InfoItem icon="truck-delivery-outline" text="Opciones de Entrega" value={profile.stores?.opciones_entrega || 'No establecido'} />
@@ -205,18 +206,18 @@ const styles = StyleSheet.create({
     headerContent: { alignItems: 'center', marginTop: -60 },
     avatarContainer: { borderWidth: 4, borderColor: 'white', borderRadius: 64, backgroundColor: '#e1e1e1' },
     editIconContainer: { position: 'absolute', bottom: 0, right: 0, backgroundColor: COLORS.secondary, padding: 8, borderRadius: 20, borderWidth: 2, borderColor: 'white' },
-    storeName: { fontSize: 26, fontWeight: 'bold', color: COLORS.primary, marginTop: 12 },
+    storeName: { fontSize: scaleFont(26), fontWeight: 'bold', color: COLORS.primary, marginTop: 12 },
     ratingContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-    ratingText: { fontSize: 16, color: COLORS.text, opacity: 0.8, marginLeft: 5 },
-    storeDescription: { textAlign: 'center', color: COLORS.text, fontSize: 16, padding: 10 },
+    ratingText: { fontSize: scaleFont(16), color: COLORS.text, opacity: 0.8, marginLeft: 5 },
+    storeDescription: { textAlign: 'center', color: COLORS.text, fontSize: scaleFont(16), padding: 10 },
     card: { borderRadius: 12, marginHorizontal: 15, marginBottom: 15, padding: 15 },
     infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
     infoCol: { marginLeft: 15, flex: 1 },
-    infoLabel: { color: COLORS.gray, fontSize: 12, textTransform: 'uppercase' },
-    infoValue: { color: COLORS.text, fontSize: 16, fontWeight: '500' },
+    infoLabel: { color: COLORS.gray, fontSize: scaleFont(12), textTransform: 'uppercase' },
+    infoValue: { color: COLORS.text, fontSize: scaleFont(16), fontWeight: '500' },
     editableRow: { paddingVertical: 10 },
-    editableLabel: { color: COLORS.primary, fontSize: 14, fontWeight: '600', marginBottom: 5 },
-    infoInput: { fontSize: 16, borderBottomWidth: 1, borderBottomColor: COLORS.gray, paddingVertical: 8 },
+    editableLabel: { color: COLORS.primary, fontSize: scaleFont(14), fontWeight: '600', marginBottom: 5 },
+    infoInput: { fontSize: scaleFont(16), borderBottomWidth: 1, borderBottomColor: COLORS.gray, paddingVertical: 8 },
     buttonSection: { paddingHorizontal: 20, marginTop: 10, marginBottom: 10 },
     logoutButtonTitle: { color: COLORS.danger, fontWeight: 'bold', padding: 20 },
 });
