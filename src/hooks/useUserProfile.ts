@@ -1,12 +1,13 @@
 // src/hooks/useUserProfile.ts
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../services/auth/config/supabaseClient'; // Ajusta la ruta si es necesario
+import { supabase } from '../services/auth/config/supabaseClient';
 import { useAuth } from './useAuth';
+import { BuyerProfile, SellerProfile } from '../types/entities';
 
 export function useUserProfile() {
-  const { session, loading: authLoading } = useAuth(); // Renombramos 'loading' para evitar conflictos
+  const { session, loading: authLoading } = useAuth();
 
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<BuyerProfile | SellerProfile | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,22 +25,28 @@ export function useUserProfile() {
       return;
     }
 
-    const profileTable = userRole === 'buyer' ? 'buyer_profiles' : 'seller_profiles';
-    const selectQuery = userRole === 'buyer' ? '*' : '*, stores(*)';
-
-
     try {
-      const { data, error } = await supabase
-        .from(profileTable)
-        .select(selectQuery)
-        .eq('user_id', session.user.id)
-        .single();
+      let profileData: BuyerProfile | SellerProfile | null = null;
 
-      if (error) {
-        throw error;
+      if (userRole === 'buyer') {
+        const { data, error } = await supabase
+          .from('buyer_profiles')
+          .select<`*`>('*') // Using Supabase generics
+          .eq('user_id', session.user.id)
+          .single();
+        if (error) throw error;
+        profileData = data;
+      } else if (userRole === 'seller') {
+        const { data, error } = await supabase
+          .from('seller_profiles')
+          .select<`*, stores(*)`>('*, stores(*)') // Using Supabase generics
+          .eq('user_id', session.user.id)
+          .single();
+        if (error) throw error;
+        profileData = data;
       }
 
-      setProfile(data);
+      setProfile(profileData);
 
     } catch (error) {
       console.error(`Error fetching profile for role ${userRole}:`, error);
@@ -50,11 +57,9 @@ export function useUserProfile() {
   }, [session]);
 
   useEffect(() => {
-    // Solo intentamos buscar el perfil cuando la sesión ha terminado de cargar y existe
     if (!authLoading && session) {
       fetchProfile();
     } else if (!authLoading && !session) {
-      // Si no hay sesión, terminamos la carga
       setLoading(false);
     }
   }, [session, authLoading, fetchProfile]);

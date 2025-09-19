@@ -8,7 +8,14 @@ import { OrderService } from '../../../../src/services/order.service';
 import { COLORS } from '../../../../src/constants/colors';
 import { scaleFont } from '../../../../src/utils/responsive';
 
-const RatingModal = ({ isVisible, onClose, orderId, ratedUserId }: any) => {
+interface RatingModalProps {
+  isVisible: boolean;
+  onClose: (submitted: boolean) => void;
+  orderId: string;
+  ratedUserId: string;
+}
+
+const RatingModal = ({ isVisible, onClose, orderId, ratedUserId }: RatingModalProps) => {
   const [view, setView] = useState<'rating' | 'success'>('rating');
   const [rating, setRating] = useState(0);
   const [loading, setLoading] = useState(false);

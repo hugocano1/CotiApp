@@ -1,11 +1,12 @@
 // Ruta: src/services/shoppingList.service.ts
-import { supabase } from './auth/config/supabaseClient'; 
+import { supabase } from './auth/config/supabaseClient';
+import { Offer, ShoppingListItem, OfferItem } from '../types/entities';
 
 export class ShoppingListService {
 
   static async createShoppingList(listData: { 
     title: string; 
-    items: any[];
+    items: ShoppingListItem[];
     delivery_type: 'delivery' | 'pickup';
     delivery_date?: Date;
     min_budget?: number; 
@@ -57,7 +58,8 @@ export class ShoppingListService {
   static async getOfferDetails(offerId: string) {
     const { data, error } = await supabase
       .from('offers')
-      .select(`
+      .select(
+        `
         *,
         offer_items(*),
         shopping_lists (
@@ -68,7 +70,8 @@ export class ShoppingListService {
             apellido
           )
         )
-      `)
+      `
+      )
       .eq('id', offerId)
       .single();
 
@@ -80,11 +83,21 @@ export class ShoppingListService {
     return data;
   }
 
-  static async getOffersForList(listId: string) {
-    const { data, error } = await supabase.from('offers').select(`*,
+  static async getOffersForList(listId: string): Promise<Offer[]> {
+    const { data, error } = await supabase
+      .from('offers')
+      .select<string, Offer>(
+        `*,
         offer_items(*),
-        sellers:seller_id (store_id, stores (name, logo_url, rating) )`).eq('shopping_list_id', listId).order('price', { ascending: true });
-    if (error) { console.error("Error fetching offers for list:", error); throw new Error(error.message); }
+        sellers:seller_id (store_id, stores (name, logo_url, rating) )`
+      )
+      .eq('shopping_list_id', listId)
+      .order('price', { ascending: true });
+
+    if (error) {
+      console.error("Error fetching offers for list:", error);
+      throw new Error(error.message);
+    }
     return data || [];
   }
 
@@ -100,10 +113,10 @@ export class ShoppingListService {
     notes?: string;
   }) {
     const { error } = await supabase.rpc('submit_offer_and_notify', {
-    shopping_list_id_arg: String(offerData.shopping_list_id), 
-    price_arg: Number(offerData.total_price), 
-    notes_arg: String(offerData.notes || ''), 
-});
+      shopping_list_id_arg: String(offerData.shopping_list_id),
+      price_arg: Number(offerData.total_price),
+      notes_arg: String(offerData.notes || ''),
+    });
 
     if (error) {
       console.error("Error submitting offer:", error);
@@ -116,7 +129,7 @@ export class ShoppingListService {
     shopping_list_id: string;
     total_price: number;
     notes?: string;
-    items: any[];
+    items: OfferItem[];
   }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Usuario no autenticado.");
@@ -144,12 +157,12 @@ export class ShoppingListService {
     // 2. Prepare the offer items with the new offer_id and the original list_item_id
     const offerItems = data.items.map(item => ({
       offer_id: offer_id,
-      list_item_id: item.id, // ✅ This was the missing field
-      item_name: item.name,
+      list_item_id: item.id,
+      item_name: item.item_name,
       quantity: item.quantity,
       unit: item.unit,
       brand: item.brand,
-      unit_price: item.price,
+      unit_price: item.unit_price,
     }));
 
     // 3. Insert the detailed items

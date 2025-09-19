@@ -1,9 +1,10 @@
 // src/hooks/useOrderDetails.ts
 import { useState, useCallback, useEffect } from 'react';
-import { OrderService } from '../services/order.service'; // Asegúrate que la ruta sea correcta
+import { OrderService } from '../services/order.service';
+import { Order } from '../types/entities';
 
 export function useOrderDetails(orderId: string | undefined) {
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchDetails = useCallback(async () => {
@@ -15,13 +16,12 @@ export function useOrderDetails(orderId: string | undefined) {
     setLoading(true);
     try {
       const data = await OrderService.getOrderDetails(orderId);
-      setOrder(data);
-    } catch (error) { 
+      setOrder(data || null); // data can be Order or null
+    } catch (error) {
       console.error("Error fetching order details in hook:", error);
       setOrder(null);
-    }
-    finally { 
-      setLoading(false); 
+    } finally {
+      setLoading(false);
     }
   }, [orderId]);
 

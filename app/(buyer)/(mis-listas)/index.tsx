@@ -1,16 +1,17 @@
 // Ruta: app/(buyer)/(mis-listas)/index.tsx
 import React, { useState } from 'react';
 import { FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, View, Text, ScrollView } from 'react-native';
-import { useShoppingLists, OfferSummary } from '../../../src/hooks/useShoppingLists';
+import { useShoppingLists } from '../../../src/hooks/useShoppingLists';
 import { Link } from 'expo-router';
 import { COLORS } from '../../../src/constants/colors';
 import { ShoppingListItem } from '../../../src/components/ShoppingListItem';
 import { ButtonGroup, Icon } from '@rneui/themed';
 import { scaleFont } from '../../../src/utils/responsive';
+import { Offer } from '../../../src/types/entities';
 
 const cardColors = [COLORS.secondary, COLORS.accent, '#e76f51', '#f4a261', '#2a9d8f'];
 
-const OfferSummaryCard = ({ offer, index }: { offer: OfferSummary, index: number }) => {
+const OfferSummaryCard = ({ offer, index }: { offer: Partial<Offer>, index: number }) => {
     const storeName = offer.seller_profiles?.stores?.name || 'Vendedor';
 
     return (
@@ -26,7 +27,7 @@ const OfferSummaryCard = ({ offer, index }: { offer: OfferSummary, index: number
                     <Icon name="store" type="material-community" color={COLORS.white} size={16} />
                     <Text style={styles.offerStore} numberOfLines={1}>{storeName}</Text>
                 </View>
-                <Text style={styles.offerPrice}>${Math.round(offer.price)}</Text>
+                <Text style={styles.offerPrice}>${Math.round(offer.price || 0)}</Text>
             </TouchableOpacity>
         </Link>
     );

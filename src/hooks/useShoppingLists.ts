@@ -2,28 +2,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '../services/auth/config/supabaseClient';
 import { useFocusEffect } from '@react-navigation/native';
-
-export type OfferSummary = {
-  id: string;
-  price: number;
-  shopping_list_id: string;
-  seller_profiles: {
-    stores: {
-      name: string;
-    }
-  }
-};
-
-export type ShoppingList = {
-  id: string;
-  title: string;
-  status: 'active' | 'pending' | 'completed' | 'closed'; // Añadimos 'closed'
-  created_at: string;
-  min_budget?: number;
-  max_budget?: number;
-  items: Array<{ name: string; quantity: number; unit: string }>;
-  offers: OfferSummary[];
-};
+import { ShoppingList } from '../types/entities';
 
 export const useShoppingLists = (statusFilter: 'active' | 'completed' | null) => {
   const [data, setData] = useState<ShoppingList[]>([]);
@@ -38,13 +17,16 @@ export const useShoppingLists = (statusFilter: 'active' | 'completed' | null) =>
 
       let query = supabase
         .from('shopping_lists')
-        .select(`*, offers (id, price, shopping_list_id, seller_profiles (stores (name)))`)
+        .select<string, ShoppingList>(
+          `
+          *,
+          offers (id, price, shopping_list_id, seller_profiles (stores (name))),
+          buyer_profiles (*)
+        `
+        )
         .eq('buyer_id', user.id);
 
-      // ✅ CORRECCIÓN DE LÓGICA DE FILTRADO
       if (statusFilter) {
-        // 'Activas' son las que están en estado 'active'.
-        // 'Historial' son las 'closed' o 'completed'.
         const statuses = statusFilter === 'active' ? ['active'] : ['closed', 'completed'];
         query = query.in('status', statuses);
       }
@@ -52,7 +34,7 @@ export const useShoppingLists = (statusFilter: 'active' | 'completed' | null) =>
       const { data: lists, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      setData(lists as ShoppingList[] || []);
+      setData(lists || []);
     } catch (err) {
       setError(err as Error);
     } finally {

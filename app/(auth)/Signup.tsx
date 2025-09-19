@@ -27,8 +27,8 @@ export default function SignupScreen() {
           'Por favor, revisa tu email para confirmar tu cuenta. Serás redirigido al inicio de sesión.'
         );
       }
-    } catch (error: any) {
-      Alert.alert('Error en el Registro', error.message);
+    } catch (error: unknown) {
+      Alert.alert('Error en el Registro', error instanceof Error ? error.message : String(error));
     } finally {
       setLoading(false);
     }

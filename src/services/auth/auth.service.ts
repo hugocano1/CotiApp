@@ -2,6 +2,8 @@ import { supabase } from '../../services/auth/config/supabaseClient';
 import { AuthError } from '@supabase/supabase-js';
 import { Alert } from 'react-native';
 
+export { AuthError } from '@supabase/supabase-js'; // Re-export AuthError
+
 // Expresión regular para validar la fortaleza de la contraseña
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
 

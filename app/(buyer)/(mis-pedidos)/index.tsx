@@ -11,7 +11,7 @@ import { scaleFont } from '../../../src/utils/responsive';
 export default function BuyerOrdersScreen() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const statusFilter = selectedIndex === 0 ? 'active' : 'history';
-  const { orders, loading, refresh } = useBuyerOrders(statusFilter as 'active' | 'history');
+  const { data: orders, loading, refresh } = useBuyerOrders(statusFilter as 'active' | 'history');
 
   if (loading) {
     return <ActivityIndicator size="large" style={styles.centered} />;

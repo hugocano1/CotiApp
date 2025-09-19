@@ -1,33 +1,131 @@
 // app/(buyer)/(mis-listas)/list-details/[id].tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
-import { useLocalSearchParams, Link } from 'expo-router';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, LayoutAnimation, UIManager, Platform, Alert } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Card, Button, Icon } from '@rneui/themed';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
 import { COLORS } from '../../../../src/constants/colors';
 import { scaleFont } from '../../../../src/utils/responsive';
+import { ShoppingList, ShoppingListItem, Offer, OfferItem } from '../../../../src/types/entities';
+
+// Enable LayoutAnimation for Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const InfoRow = ({ icon, text, value }: { icon: string; text: string; value: string | number; }) => (
+  <View style={styles.infoRow}>
+    <Icon name={icon} type="material-community" color={COLORS.secondary} size={18} />
+    <Text style={styles.infoTextLabel}>{text}:</Text>
+    <Text style={styles.infoTextValue}>{value}</Text>
+  </View>
+);
+
+const OfferAccordionCard = ({ offer, isExpanded, onToggle, onAccept }: { offer: Offer; isExpanded: boolean; onToggle: () => void; onAccept: (offerId: string) => void; }) => {
+  
+  const renderOfferItems = () => (
+    <View style={styles.offerItemsContainer}>
+      {offer.offer_items.map((item: OfferItem, index: number) => (
+        <View key={item.id} style={[styles.offerItemRow, index % 2 === 1 && styles.offerItemRowAlt]}>
+          <Text style={styles.offerItemName}>{item.quantity}x {item.item_name}</Text>
+          <Text style={styles.offerItemPrice}>${(item.unit_price * item.quantity).toFixed(2)}</Text>
+        </View>
+      ))}
+      <Card.Divider style={{marginTop: 10}}/>
+      {offer.notes && <Text style={styles.notes}>Notas del vendedor: {offer.notes}</Text>}
+      <Button
+        title="Aceptar esta Oferta"
+        onPress={() => onAccept(offer.id)}
+        buttonStyle={styles.acceptButton}
+        titleStyle={styles.acceptButtonTitle}
+        icon={<Icon name="check-circle-outline" type="material-community" color="white" size={16} containerStyle={{marginRight: 8}}/>}
+      />
+    </View>
+  );
+
+  return (
+    <Card containerStyle={styles.offerCard}>
+      <TouchableOpacity onPress={onToggle} activeOpacity={0.8}>
+        <View style={styles.summaryRow}>
+            <View style={styles.summaryStore}>
+                <Icon name="storefront-outline" type="material-community" color={COLORS.primary} size={22} />
+                <Text style={styles.storeName}>{offer.sellers?.stores?.name || 'Vendedor'}</Text>
+            </View>
+            <View style={styles.summaryPriceContainer}>
+                <Text style={styles.summaryPrice}>${offer.price.toFixed(2)}</Text>
+                <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} type="material-community" color={COLORS.gray} size={22}/>
+            </View>
+        </View>
+      </TouchableOpacity>
+      {isExpanded && renderOfferItems()}
+    </Card>
+  );
+};
+
 
 export default function BuyerListDetailsScreen() {
   const { id } = useLocalSearchParams();
   const listId = Array.isArray(id) ? id[0] : id;
+  const router = useRouter();
 
-  const [listDetails, setListDetails] = useState<any>(null);
+  const [listDetails, setListDetails] = useState<ShoppingList | null>(null);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedOfferId, setExpandedOfferId] = useState<string | null>(null);
+  const [isAccepting, setIsAccepting] = useState(false);
 
   useEffect(() => {
     if (listId) {
       setLoading(true);
-      ShoppingListService.getListDetails(listId)
-        .then(setListDetails)
-        .catch(err => console.error("Error fetching list details:", err))
-        .finally(() => setLoading(false));
+      Promise.all([
+        ShoppingListService.getListDetails(listId),
+        ShoppingListService.getOffersForList(listId),
+      ]).then(([listData, offersData]) => {
+        setListDetails(listData);
+        setOffers(offersData);
+      }).catch(err => {
+        console.error("Error fetching data:", err);
+        Alert.alert("Error", "No se pudieron cargar los datos de la lista y las ofertas.");
+      }).finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
   }, [listId]);
 
-  if (loading) {
-    return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
+  const handleToggleOffer = (offerId: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedOfferId(currentId => (currentId === offerId ? null : offerId));
+  };
+
+  const handleAcceptOffer = async (offerId: string) => {
+    Alert.alert(
+      "Aceptar Oferta",
+      "¿Estás seguro de que quieres aceptar esta oferta? Las demás serán rechazadas y la lista se cerrará.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Sí, Aceptar", onPress: async () => {
+          setIsAccepting(true);
+          try {
+            await ShoppingListService.acceptOffer(offerId, listId as string);
+            Alert.alert("¡Éxito!", "Has aceptado la oferta y se ha creado un nuevo pedido.");
+            router.replace({ pathname: '/(buyer)/(mis-pedidos)' });
+          } catch (error: any) {
+            Alert.alert("Error", error.message);
+          } finally {
+            setIsAccepting(false);
+          }
+        }}
+      ]
+    );
+  };
+
+  if (loading || isAccepting) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        {isAccepting && <Text style={{marginTop: 10, color: COLORS.gray}}>Finalizando la lista...</Text>}
+      </View>
+    );
   }
 
   if (!listDetails) {
@@ -39,17 +137,17 @@ export default function BuyerListDetailsScreen() {
       <Text style={styles.header}>{listDetails.title || 'Detalles de la Lista'}</Text>
       
       <Card containerStyle={styles.card}>
-        <Card.Title>Resumen de la Lista</Card.Title>
+        <Card.Title style={styles.cardTitle}>Resumen de tu Lista</Card.Title>
         <Card.Divider/>
         <InfoRow icon="information-outline" text="Estado" value={listDetails.status} />
-        <InfoRow icon="cash" text="Presupuesto" value={`$${listDetails.min_budget || 'N/A'} - $${listDetails.max_budget || 'N/A'}`} />
+        <InfoRow icon="cash" text="Presupuesto" value={`${listDetails.min_budget || 'N/A'} - ${listDetails.max_budget || 'N/A'}`} />
         <InfoRow icon="truck-delivery-outline" text="Tipo de Entrega" value={listDetails.delivery_type || 'No especificado'} />
       </Card>
 
       <Card containerStyle={styles.card}>
-        <Card.Title>Artículos Solicitados</Card.Title>
+        <Card.Title style={styles.cardTitle}>Artículos que Solicitaste</Card.Title>
         <Card.Divider/>
-        {(listDetails.items || []).map((item: any, index: number) => (
+        {(listDetails.items || []).map((item: ShoppingListItem, index: number) => (
           <View key={index} style={styles.itemContainer}>
             <Text style={styles.itemName}>{item.name}</Text>
             <View style={styles.itemDetailsRow}>
@@ -61,43 +159,58 @@ export default function BuyerListDetailsScreen() {
         ))}
       </Card>
       
-      <Link 
-        href={{
-          pathname: `/(buyer)/(mis-pedidos)/order-details/[id]`,
-          params: { id: listId } 
-        }}
-        asChild
-        >
-        <Button 
-         title="Ver Ofertas Recibidas" 
-          buttonStyle={styles.viewOffersButton}
-          icon={<Icon name="tag-multiple" type="material-community" color="white" containerStyle={{marginRight: 10}}/>}
-        />
-      </Link>
+      <View style={styles.offersSection}>
+        <Text style={styles.offersHeader}>Ofertas Recibidas</Text>
+        {offers.length > 0 ? (
+          offers.map(offer => (
+            <OfferAccordionCard
+              key={offer.id}
+              offer={offer}
+              isExpanded={expandedOfferId === offer.id}
+              onToggle={() => handleToggleOffer(offer.id)}
+              onAccept={handleAcceptOffer}
+            />
+          ))
+        ) : (
+          <Text style={styles.noOffersText}>Aún no has recibido ofertas para esta lista.</Text>
+        )}
+      </View>
     </ScrollView>
   );
 }
 
-const InfoRow = ({ icon, text, value }: any) => (
-  <View style={styles.infoRow}>
-    <Icon name={icon} type="material-community" color={COLORS.secondary} size={20} />
-    <Text style={styles.infoTextLabel}>{text}:</Text>
-    <Text style={styles.infoTextValue}>{value}</Text>
-  </View>
-);
-
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.background },
+    container: { flex: 1, backgroundColor: '#f9f9f9' },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: { fontSize: scaleFont(24), fontWeight: 'bold', textAlign: 'center', padding: 20, color: COLORS.primary },
-    card: { borderRadius: 12, marginHorizontal: 15, marginBottom: 15 },
-    viewOffersButton: { backgroundColor: COLORS.secondary, margin: 20, borderRadius: 10, paddingVertical: 12 },
-    infoRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 5 },
-    infoTextLabel: { marginLeft: 10, fontSize: scaleFont(16), color: COLORS.gray },
-    infoTextValue: { marginLeft: 5, fontSize: scaleFont(16), color: COLORS.text, fontWeight: '500' },
-    itemContainer: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-    itemName: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.text, marginBottom: 5 },
+    header: { fontSize: scaleFont(22), fontWeight: 'bold', textAlign: 'center', paddingVertical: 15, color: COLORS.primary },
+    card: { borderRadius: 10, marginHorizontal: 15, marginBottom: 15, paddingBottom: 10 },
+    cardTitle: { textAlign: 'left', fontSize: scaleFont(16), color: COLORS.text, marginBottom: 5 },
+    infoRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
+    infoTextLabel: { marginLeft: 10, fontSize: scaleFont(14), color: COLORS.gray },
+    infoTextValue: { marginLeft: 5, fontSize: scaleFont(14), color: COLORS.text, fontWeight: '500' },
+    itemContainer: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+    itemName: { fontSize: scaleFont(15), fontWeight: '500', color: COLORS.text, marginBottom: 4 },
     itemDetailsRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
-    itemDetailText: { fontSize: scaleFont(14), color: COLORS.gray, marginRight: 10 },
-    itemNotes: { fontSize: scaleFont(14), color: COLORS.accent, fontStyle: 'italic', marginTop: 5, marginLeft: 5 }
+    itemDetailText: { fontSize: scaleFont(13), color: COLORS.gray, marginRight: 10 },
+    itemNotes: { fontSize: scaleFont(13), color: COLORS.accent, fontStyle: 'italic', marginTop: 4, marginLeft: 5 },
+    
+    offersSection: { paddingHorizontal: 5, paddingBottom: 30 },
+    offersHeader: { fontSize: scaleFont(19), fontWeight: 'bold', color: COLORS.primary, marginLeft: 15, marginBottom: 10 },
+    noOffersText: { textAlign: 'center', color: COLORS.gray, marginTop: 20, fontSize: scaleFont(14) },
+
+    offerCard: { borderRadius: 10, marginHorizontal: 10, marginBottom: 10, padding: 0, backgroundColor: '#fff', elevation: 2 },
+    summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 12 },
+    summaryStore: { flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 10 },
+    storeName: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.primary, marginLeft: 10, flexShrink: 1 },
+    summaryPriceContainer: { flexDirection: 'row', alignItems: 'center' },
+    summaryPrice: { fontSize: scaleFont(17), fontWeight: 'bold', color: COLORS.text, marginRight: 8 },
+    
+    offerItemsContainer: { paddingTop: 0, paddingBottom: 10 },
+    offerItemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 15 },
+    offerItemRowAlt: { backgroundColor: '#f8f9fa' },
+    offerItemName: { fontSize: scaleFont(13), color: COLORS.text, flex: 1 },
+    offerItemPrice: { fontSize: scaleFont(13), fontWeight: '500', color: COLORS.text },
+    notes: { fontStyle: 'italic', color: COLORS.gray, marginTop: 10, marginBottom: 15, fontSize: scaleFont(12), paddingHorizontal: 15 },
+    acceptButton: { backgroundColor: COLORS.secondary, borderRadius: 8, marginHorizontal: 15 },
+    acceptButtonTitle: { fontSize: scaleFont(14) },
 });

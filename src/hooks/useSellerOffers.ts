@@ -3,10 +3,11 @@ import { useState, useCallback } from 'react';
 import { supabase } from '../services/auth/config/supabaseClient';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from './useAuth';
+import { Offer } from '../types/entities';
 
 export function useSellerOffers(limit?: number) {
   const { session } = useAuth();
-  const [offers, setOffers] = useState<any[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOffers = useCallback(async () => {
@@ -18,7 +19,8 @@ export function useSellerOffers(limit?: number) {
       setLoading(true);
       let query = supabase
         .from('offers')
-        .select(`
+        .select<string, Offer>(
+          `
           *,
           shopping_lists ( 
             title,
@@ -28,7 +30,8 @@ export function useSellerOffers(limit?: number) {
               foto_perfil
             )
           )
-        `)
+        `
+        )
         .eq('seller_id', session.user.id)
         .order('created_at', { ascending: false });
 

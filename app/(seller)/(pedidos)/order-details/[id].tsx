@@ -7,6 +7,7 @@ import { OrderService } from '../../../../src/services/order.service';
 import { COLORS } from '../../../../src/constants/colors';
 import { InfoRow } from '../../../../src/components/InfoRow';
 import { scaleFont } from '../../../../src/utils/responsive';
+import { Order, ShoppingListItem } from '../../../../src/types/entities';
 
 const formatCurrency = (value: number) => {
     return `$${Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
@@ -38,7 +39,7 @@ const CardTitle = ({ title, iconName }: { title: string, iconName?: string }) =>
 
 export default function SellerOrderDetailsScreen() {
   const { id: orderId } = useLocalSearchParams();
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchDetails = useCallback(() => {
@@ -116,7 +117,7 @@ export default function SellerOrderDetailsScreen() {
       <Card containerStyle={styles.card}>
         <CardTitle title="Productos del Pedido" iconName="basket" />
         <Card.Divider />
-        {(listInfo?.items || []).map((item: any, index: number) => (
+        {(listInfo?.items || []).map((item: ShoppingListItem, index: number) => (
           <View key={index} style={styles.itemContainer}>
             <View style={styles.itemRow}>
                 <Text style={styles.itemName}>{item.name}</Text>

@@ -2,9 +2,10 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '../services/auth/config/supabaseClient';
 import { useFocusEffect } from '@react-navigation/native';
+import { Order } from '../types/entities';
 
-export function useBuyerOrders(statusFilter: 'active' | 'history' | null) {
-  const [orders, setOrders] = useState<any[]>([]);
+export function useBuyerOrders(statusFilter: 'active' | 'history' | 'enviado' | null) {
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = useCallback(async () => {
@@ -15,7 +16,8 @@ export function useBuyerOrders(statusFilter: 'active' | 'history' | null) {
 
       let query = supabase
         .from('orders')
-        .select(`
+        .select<string, Order>(
+          `
           *,
           seller_profiles:seller_id (
             nombre,
@@ -24,15 +26,17 @@ export function useBuyerOrders(statusFilter: 'active' | 'history' | null) {
             stores ( name )
           ),
           shopping_lists:shopping_list_id ( title )
-        `)
+        `
+        )
         .eq('buyer_id', user.id);
 
-      
-
       if (statusFilter) {
-        const statuses = statusFilter === 'active'
-          ? ['confirmed', 'enviado']
-          : ['completed'];
+        const statuses =
+          statusFilter === 'active'
+            ? ['confirmed', 'enviado']
+            : statusFilter === 'enviado'
+            ? ['enviado']
+            : ['completed'];
         query = query.in('status', statuses);
       }
 
@@ -49,5 +53,5 @@ export function useBuyerOrders(statusFilter: 'active' | 'history' | null) {
 
   useFocusEffect(useCallback(() => { fetchOrders(); }, [fetchOrders]));
 
-  return { orders, loading, refresh: fetchOrders };
+  return { data: orders, loading, refresh: fetchOrders };
 }

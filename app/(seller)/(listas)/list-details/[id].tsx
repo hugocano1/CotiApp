@@ -6,12 +6,19 @@ import { Card, Button, Icon } from '@rneui/themed';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
 import { COLORS } from '../../../../src/constants/colors';
 import { scaleFont } from '../../../../src/utils/responsive';
+import { ShoppingList, ShoppingListItem } from '../../../../src/types/entities';
+
+interface InfoRowProps {
+  icon: string;
+  text: string;
+  value: string | number;
+}
 
 export default function SellerListDetailsScreen() {
   const { id } = useLocalSearchParams();
   const listId = Array.isArray(id) ? id[0] : id;
 
-  const [listDetails, setListDetails] = useState<any>(null);
+  const [listDetails, setListDetails] = useState<ShoppingList | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +47,7 @@ export default function SellerListDetailsScreen() {
         <ScrollView style={styles.container}>
             <View style={styles.headerContainer}>
                 <Text style={styles.header}>{listDetails.title || 'Detalles de la Lista'}</Text>
-                {listDetails.buyer && <Text style={styles.buyerName}>De: {listDetails.buyer.nombre} {listDetails.buyer.apellido}</Text>}
+                {listDetails.buyer_profiles && <Text style={styles.buyerName}>De: {listDetails.buyer_profiles.nombre} {listDetails.buyer_profiles.apellido}</Text>}
             </View>
             
             <Card containerStyle={styles.card}>
@@ -52,7 +59,7 @@ export default function SellerListDetailsScreen() {
             </Card>
             
             <Text style={styles.sectionHeader}>Artículos Solicitados</Text>
-            {(listDetails.items || []).map((item: any, index: number) => (
+            {(listDetails.items || []).map((item: ShoppingListItem, index: number) => (
                 <Card key={index} containerStyle={styles.itemCard}>
                     <View style={styles.itemCardRow}>
                         <View style={styles.itemDetailsColumn}>
@@ -79,25 +86,29 @@ export default function SellerListDetailsScreen() {
             ))}
         </ScrollView>
         <View style={styles.footer}>
-            <Link 
-                href={{
-                pathname: "/(seller)/(listas)/create-offer",
-                params: { listId: listId }
-                }} 
-                asChild
-            >
-                <Button 
-                    title="Hacer una Oferta" 
-                    buttonStyle={styles.actionButton}
-                    icon={<Icon name="tag-plus-outline" type="material-community" color="white" containerStyle={{marginRight: 10}} />}
-                />
-            </Link>
+            {listDetails.status === 'active' ? (
+                <Link 
+                    href={{
+                    pathname: "/(seller)/(listas)/create-offer",
+                    params: { listId: listId }
+                    }} 
+                    asChild
+                >
+                    <Button 
+                        title="Hacer una Oferta" 
+                        buttonStyle={styles.actionButton}
+                        icon={<Icon name="tag-plus-outline" type="material-community" color="white" containerStyle={{marginRight: 10}} />}
+                    />
+                </Link>
+            ) : (
+                <Text style={styles.closedText}>Esta lista ya no acepta ofertas.</Text>
+            )}
         </View>
     </View>
   );
 }
 
-const InfoRow = ({ icon, text, value }: any) => ( 
+const InfoRow = ({ icon, text, value }: InfoRowProps) => ( 
     <View style={styles.infoRow}>
         <Icon name={icon} type="material-community" color={COLORS.secondary} size={18} />
         <Text style={styles.infoTextLabel}>{text}</Text>
@@ -120,7 +131,7 @@ const styles = StyleSheet.create({
   itemCard: { borderRadius: 10, marginHorizontal: 30, marginBottom: 4, padding: 12 },
   itemCardRow: { flexDirection: 'row', alignItems: 'center' },
   itemDetailsColumn: { flex: 1, paddingRight: 10 },
-  itemQuantityColumn: { alignItems: 'center', justifyContent: 'center', paddingLeft: 10, borderLeftWidth: 1, borderLeftColor: COLORS.grayLight },
+  itemQuantityColumn: { alignItems: 'center', justifyContent: 'center', paddingLeft: 10, borderLeftWidth: 1, borderLeftColor: COLORS.gray },
   itemName: { fontSize: scaleFont(15), fontWeight: '600', color: COLORS.text, marginBottom: 6 },
   metaItem: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   itemMetaText: { fontSize: scaleFont(12), color: COLORS.gray, marginLeft: 5 },
@@ -129,4 +140,5 @@ const styles = StyleSheet.create({
   itemUnitText: { fontSize: scaleFont(12), color: COLORS.gray },
   footer: { padding: 15, backgroundColor: '#ffffff' },
   actionButton: { backgroundColor: COLORS.secondary, borderRadius: 10, paddingVertical: 10 },
+  closedText: { textAlign: 'center', fontStyle: 'italic', color: COLORS.gray, fontSize: scaleFont(14) },
 });

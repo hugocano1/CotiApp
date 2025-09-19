@@ -8,9 +8,10 @@ import { supabase } from '../../../src/services/auth/config/supabaseClient';
 import { COLORS } from '../../../src/constants/colors';
 import { SellerListItem } from '../../../src/components/SellerListItem';
 import { scaleFont } from '../../../src/utils/responsive';
+import { ShoppingList } from '../../../src/types/entities';
 
 function useAvailableLists(statusFilter: 'active' | 'closed') {
-  const [lists, setLists] = useState<any[]>([]);
+  const [lists, setLists] = useState<ShoppingList[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchLists = useCallback(async () => {
@@ -18,20 +19,22 @@ function useAvailableLists(statusFilter: 'active' | 'closed') {
     try {
       const { data, error } = await supabase
         .from('shopping_lists')
-        .select(`
+        .select<string, ShoppingList>(
+          `
           *,
           buyer_profiles (
             nombre,
             apellido,
             foto_perfil
           )
-        `)
+        `
+        )
         .eq('status', statusFilter);
 
       if (error) throw error;
       setLists(data || []);
-    } catch (error) {
-      console.error(error);
+    } catch (error: unknown) {
+      console.error(error instanceof Error ? error.message : error);
     } finally {
       setLoading(false);
     }

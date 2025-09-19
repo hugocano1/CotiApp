@@ -4,9 +4,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Card, Avatar, Icon } from '@rneui/themed';
 import { COLORS } from '../constants/colors';
 import { scaleFont } from '../utils/responsive';
+import { Order } from '../types/entities';
 
 type Props = {
-  order: any;
+  order: Order;
   userRole: 'buyer' | 'seller';
 };
 
@@ -19,18 +20,33 @@ const statusConfig = {
 
 export function OrderListItem({ order, userRole }: Props) {
   const isBuyer = userRole === 'buyer';
-  const profile = isBuyer ? order.seller_profiles : order.buyer_profiles;
-  const storeName = order.seller_profiles?.stores?.name;
-  
-  const displayName = profile?.nombre ? `${profile.nombre} ${profile.apellido || ''}`.trim() : (storeName || 'Usuario');
-  const displayAvatar = profile?.foto_perfil || profile?.store_logo_url;
-  const rating = isBuyer ? profile?.calificacion_vendedor : profile?.calificacion_comprador;
 
-  const dispatchDate = order.shopping_lists?.delivery_date
-    ? new Date(order.shopping_lists.delivery_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
-    : 'No especificada';
+  // Directly access typed profiles to help TypeScript
+  const sellerProfile = order.seller_profiles;
+  const buyerProfile = order.buyer_profiles;
 
-  const currentStatus = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.default;
+  const displayName = isBuyer
+    ? sellerProfile?.stores?.name || sellerProfile?.nombre || 'Vendedor'
+    : `${buyerProfile?.nombre || ''} ${buyerProfile?.apellido || ''}`.trim() || 'Comprador';
+
+  const displayAvatar = isBuyer
+    ? sellerProfile?.foto_perfil
+    : buyerProfile?.foto_perfil;
+
+  const rating = isBuyer
+    ? sellerProfile?.calificacion_vendedor
+    : buyerProfile?.calificacion_comprador;
+
+  const dispatchDate =
+    order.shopping_lists?.delivery_date
+      ? new Date(order.shopping_lists.delivery_date).toLocaleDateString('es-ES', {
+          day: 'numeric',
+          month: 'short',
+        })
+      : 'No especificada';
+
+  const currentStatus =
+    statusConfig[order.status as keyof typeof statusConfig] || statusConfig.default;
 
   return (
     <Card containerStyle={styles.card}>
@@ -54,20 +70,30 @@ export function OrderListItem({ order, userRole }: Props) {
                 {displayName}
               </Text>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: currentStatus.color }]}>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: currentStatus.color },
+              ]}
+            >
               <Text style={styles.statusText}>{currentStatus.text}</Text>
             </View>
           </View>
-          
+
           <Text style={styles.subtitle} numberOfLines={1}>
             {order.shopping_lists?.title}
           </Text>
 
           <View style={styles.bottomRow}>
             <Text style={styles.price}>${order.total_price}</Text>
-            {rating && (
+            {rating != null && (
               <View style={styles.ratingContainer}>
-                <Icon name="star" type="material-community" color={COLORS.accent} size={16} />
+                <Icon
+                  name="star"
+                  type="material-community"
+                  color={COLORS.accent}
+                  size={16}
+                />
                 <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
               </View>
             )}
@@ -91,8 +117,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 2,
   },
-  contentContainer: { 
-    flexDirection: 'row', 
+  contentContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
   avatarContainer: {
@@ -105,8 +131,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  infoContainer: { 
-    flex: 1, 
+  infoContainer: {
+    flex: 1,
     justifyContent: 'center',
   },
   topRow: {
@@ -118,7 +144,7 @@ const styles = StyleSheet.create({
   titleContainer: {
     flex: 1,
   },
-  titlePrefix: { 
+  titlePrefix: {
     fontSize: scaleFont(13),
     color: COLORS.gray,
   },
@@ -127,8 +153,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.text,
   },
-  subtitle: { 
-    fontSize: scaleFont(13), 
+  subtitle: {
+    fontSize: scaleFont(13),
     color: COLORS.text,
     marginTop: 4,
     marginBottom: 8,
@@ -138,34 +164,34 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
-  price: { 
-    fontSize: scaleFont(16), 
-    fontWeight: 'bold', 
+  price: {
+    fontSize: scaleFont(16),
+    fontWeight: 'bold',
     color: COLORS.secondary,
   },
-  ratingContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8, 
-    paddingVertical: 4, 
-    borderRadius: 8 
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  ratingText: { 
-    marginLeft: 4, 
-    fontSize: scaleFont(12), 
-    fontWeight: 'bold' 
+  ratingText: {
+    marginLeft: 4,
+    fontSize: scaleFont(12),
+    fontWeight: 'bold',
   },
-  statusBadge: { 
-    paddingHorizontal: 8, 
-    paddingVertical: 4, 
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 8,
     marginLeft: 8,
   },
-  statusText: { 
-    color: COLORS.white, 
-    fontSize: scaleFont(10), 
-    fontWeight: 'bold', 
-    textTransform: 'uppercase' 
+  statusText: {
+    color: COLORS.white,
+    fontSize: scaleFont(10),
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
 });

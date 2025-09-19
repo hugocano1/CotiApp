@@ -25,9 +25,8 @@ export default function BuyerHomeScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { profile } = useUserProfile();
-  const { data: activeLists, loading: listsLoading } = useShoppingLists('active', 3);
-  const { orders: allOrders, loading: ordersLoading } = useBuyerOrders();
-  const onTheWayOrders = allOrders.filter(order => order.status === 'enviado');
+  const { data: activeLists, loading: listsLoading } = useShoppingLists('active');
+  const { data: onTheWayOrders, loading: ordersLoading } = useBuyerOrders('enviado');
 
   const welcomeMessage = profile?.nombre ? `Hola, ${profile.nombre}!` : 'Bienvenido a Coti';
 
@@ -51,19 +50,18 @@ export default function BuyerHomeScreen() {
           <Text style={styles.panelTitle}>Panel de comprador</Text>
           <Text style={styles.subtitle}>Crea tu lista de compras y empieza a recibir las mejores ofertas.</Text>
           
-          <TouchableOpacity onPress={() => router.push('/(buyer)/crear-lista')}>
-            <Button
-              title="Crear nueva lista"
-              buttonStyle={styles.mainButton}
-              titleStyle={styles.mainButtonTitle}
-              icon={<Icon name="playlist-plus" type="material-community" color={COLORS.primary} />}
-            />
-          </TouchableOpacity>
+          <Button
+            title="Crear nueva lista"
+            onPress={() => router.push('/(buyer)/crear-lista')}
+            buttonStyle={styles.mainButton}
+            titleStyle={styles.mainButtonTitle}
+            icon={<Icon name="playlist-plus" type="material-community" color={COLORS.primary} />}
+          />
           
           <SectionHeader title="Mis listas activas" onPress={() => router.push('/(buyer)/(mis-listas)')} />
           {listsLoading ? <ActivityIndicator style={{marginTop: 20}}/> :
             activeLists.length > 0 ? (
-              activeLists.map(list => (
+              activeLists.slice(0, 3).map(list => (
                 <View key={list.id} style={styles.cardSpacing}>
                   <TouchableOpacity onPress={() => router.push({ pathname: `/(buyer)/(mis-listas)/list-details/[id]`, params: {id: list.id} })}>
                     <ShoppingListItem list={list} />

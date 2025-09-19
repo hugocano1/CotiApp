@@ -5,9 +5,11 @@ import { Avatar, Card, Icon, Button } from '@rneui/themed';
 import { useAuth } from '../../src/hooks/useAuth';
 import { useUserProfile } from '../../src/hooks/useUserProfile';
 import { supabase } from '../../src/services/auth/config/supabaseClient';
+import { StorageService } from '../../src/services/storage.service';
 import { COLORS } from '../../src/constants/colors';
 import * as ImagePicker from 'expo-image-picker';
 import { scaleFont } from '../../src/utils/responsive';
+import { SellerProfile } from '../../src/types/entities';
 
 const InfoItem = ({ icon, text, value }: { icon: string, text: string, value: string | number }) => (
     <View style={styles.infoRow}>
@@ -19,7 +21,13 @@ const InfoItem = ({ icon, text, value }: { icon: string, text: string, value: st
     </View>
 );
 
-const EditableInfoItem = ({ label, value, onChangeText }: any) => (
+interface EditableInfoItemProps {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+}
+
+const EditableInfoItem = ({ label, value, onChangeText }: EditableInfoItemProps) => (
     <View style={styles.editableRow}>
         <Text style={styles.editableLabel}>{label}</Text>
         <TextInput value={value} onChangeText={onChangeText} style={styles.infoInput} />
@@ -28,7 +36,7 @@ const EditableInfoItem = ({ label, value, onChangeText }: any) => (
 
 export default function SellerProfileScreen() {
     const { session } = useAuth();
-    const { profile, loading, refreshProfile } = useUserProfile();
+    const { profile, role, loading, refreshProfile } = useUserProfile();
     
     const [editMode, setEditMode] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -42,15 +50,16 @@ export default function SellerProfileScreen() {
     const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
 
     useEffect(() => {
-        if (profile) {
-            setEditedName(profile.nombre || '');
-            setEditedStoreName(profile.stores?.name || '');
-            setEditedStoreDescription(profile.store_description || '');
-            setEditedDireccion(profile.stores?.direccion || '');
-            setEditedHorario(profile.stores?.horario_atencion || '');
-            setEditedOpcionesEntrega(profile.stores?.opciones_entrega || '');
+        if (role === 'seller' && profile) {
+            const sellerProfile = profile as SellerProfile;
+            setEditedName(sellerProfile.nombre || '');
+            setEditedStoreName(sellerProfile.stores?.name || '');
+            setEditedStoreDescription(sellerProfile.store_description || '');
+            setEditedDireccion(sellerProfile.stores?.direccion || '');
+            setEditedHorario(sellerProfile.stores?.horario_atencion || '');
+            setEditedOpcionesEntrega(sellerProfile.stores?.opciones_entrega || '');
         }
-    }, [profile]);
+    }, [profile, role]);
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -70,47 +79,38 @@ export default function SellerProfileScreen() {
         }
     };
 
-    const uploadImage = async (uri: string, userId: string): Promise<string> => {
-        const fileExt = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-        const filePath = `seller_avatars/${userId}-profile.${fileExt}`;
-        const response = await fetch(uri);
-        const blob = await response.blob();
-        
-        const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, blob, { upsert: true, contentType: `image/${fileExt}` });
-        if (uploadError) throw new Error(`Error de Supabase Storage: ${uploadError.message}`);
-        
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        if (!data.publicUrl) throw new Error("No se pudo obtener la URL pública del archivo.");
-        
-        return `${data.publicUrl}?t=${new Date().getTime()}`;
-    };
-
     const handleSaveProfile = async () => {
-        if (!session?.user || !profile) return;
+        if (!session?.user || role !== 'seller' || !profile) return;
         setSaving(true);
 
+        const sellerProfile = profile as SellerProfile;
+
         try {
-            const sellerProfileUpdates: { [key: string]: any } = {
+            const sellerProfileUpdates: { 
+                nombre?: string; 
+                store_description?: string; 
+                foto_perfil?: string; 
+            } = {
                 nombre: editedName,
                 store_description: editedStoreDescription,
             };
 
             if (selectedImageUri) {
-                const imageUrl = await uploadImage(selectedImageUri, session.user.id);
+                const imageUrl = await StorageService.uploadProfileImage(selectedImageUri, session.user.id, 'seller');
                 sellerProfileUpdates.foto_perfil = imageUrl;
             }
 
             const { error: profileError } = await supabase.from('seller_profiles').update(sellerProfileUpdates).eq('user_id', session.user.id);
             if (profileError) throw profileError;
 
-            if (profile.store_id) {
+            if (sellerProfile.store_id) {
                 const storeUpdates = {
                     name: editedStoreName,
                     direccion: editedDireccion,
                     horario_atencion: editedHorario,
                     opciones_entrega: editedOpcionesEntrega,
                 };
-                const { error: storeError } = await supabase.from('stores').update(storeUpdates).eq('id', profile.store_id);
+                const { error: storeError } = await supabase.from('stores').update(storeUpdates).eq('id', sellerProfile.store_id);
                 if (storeError) throw storeError;
             }
             
@@ -125,14 +125,15 @@ export default function SellerProfileScreen() {
         }
     };
     
-    if (loading || !profile) {
+    if (loading || !profile || role !== 'seller') {
         return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
     }
 
-    const storeName = editMode ? editedStoreName : (profile.stores?.name || 'Nombre Tienda');
-    const sellerName = editMode ? editedName : (profile.nombre || 'Nombre Vendedor');
+    const sellerProfile = profile as SellerProfile;
+    const storeName = editMode ? editedStoreName : (sellerProfile.stores?.name || 'Nombre Tienda');
+    const sellerName = editMode ? editedName : (sellerProfile.nombre || 'Nombre Vendedor');
     
-    const displayAvatar = selectedImageUri || profile.foto_perfil || profile.store_logo_url;
+    const displayAvatar = selectedImageUri || sellerProfile.foto_perfil || sellerProfile.stores?.store_logo_url;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -149,7 +150,7 @@ export default function SellerProfileScreen() {
                     <Text style={styles.storeName}>{storeName}</Text>
                     <View style={styles.ratingContainer}>
                         <Icon name="star" type="material-community" color={COLORS.accent} size={20} />
-                        <Text style={styles.ratingText}>{profile.calificacion_vendedor?.toFixed(1) || 'N/A'}</Text>
+                        <Text style={styles.ratingText}>{sellerProfile.calificacion_vendedor?.toFixed(1) || 'N/A'}</Text>
                     </View>
                 </View>
 
@@ -168,10 +169,10 @@ export default function SellerProfileScreen() {
                     <Card containerStyle={styles.card}>
                         <Card.Title>Información de la Tienda</Card.Title>
                         <Card.Divider />
-                        <Text style={styles.storeDescription}>{profile.store_description || 'No establecido'}</Text>
-                        <InfoItem icon="map-marker-outline" text="Dirección" value={profile.stores?.direccion || 'No establecido'} />
-                        <InfoItem icon="clock-outline" text="Horario" value={profile.stores?.horario_atencion || 'No establecido'} />
-                        <InfoItem icon="truck-delivery-outline" text="Opciones de Entrega" value={profile.stores?.opciones_entrega || 'No establecido'} />
+                        <Text style={styles.storeDescription}>{sellerProfile.store_description || 'No establecido'}</Text>
+                        <InfoItem icon="map-marker-outline" text="Dirección" value={sellerProfile.stores?.direccion || 'No establecido'} />
+                        <InfoItem icon="clock-outline" text="Horario" value={sellerProfile.stores?.horario_atencion || 'No establecido'} />
+                        <InfoItem icon="truck-delivery-outline" text="Opciones de Entrega" value={sellerProfile.stores?.opciones_entrega || 'No establecido'} />
                     </Card>
                 )}
 

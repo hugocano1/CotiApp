@@ -8,7 +8,7 @@ import { COLORS } from '../../src/constants/colors';
 import { ShoppingListService } from '../../src/services/shoppingList.service';
 import { scaleFont } from '../../src/utils/responsive';
 
-type Item = { name: string; quantity: number; unit: string; brand?: string; notes?: string; };
+type Item = { id: string; name: string; quantity: number; unit: string; brand?: string; notes?: string; };
 type DeliveryType = 'delivery' | 'pickup';
 const UNITS = ['ud', 'kg', 'g', 'L', 'ml', 'paquete', 'lata', 'botella', 'caja'];
 
@@ -42,7 +42,7 @@ export default function CreateListScreen() {
 
   const handleAddItem = () => {
     if (!newItemName.trim()) { Alert.alert('Error', 'Por favor, ingresa el nombre del producto.'); return; }
-    setItems([...items, { name: newItemName.trim(), quantity: newItemQty, unit: newItemUnit, brand: newItemBrand.trim(), notes: newItemNotes.trim() }]);
+    setItems([...items, { id: Date.now().toString(), name: newItemName.trim(), quantity: newItemQty, unit: newItemUnit, brand: newItemBrand.trim(), notes: newItemNotes.trim() }]);
     setNewItemName(''); setNewItemQty(1); setNewItemUnit('ud'); setNewItemBrand(''); setNewItemNotes('');
   };
 

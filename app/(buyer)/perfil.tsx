@@ -5,10 +5,12 @@ import { Avatar, Card, Icon, Button, BottomSheet, ListItem } from '@rneui/themed
 import { useAuth } from '../../src/hooks/useAuth';
 import { useUserProfile } from '../../src/hooks/useUserProfile';
 import { supabase } from '../../src/services/auth/config/supabaseClient';
+import { StorageService } from '../../src/services/storage.service';
 import { COLORS } from '../../src/constants/colors';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { scaleFont } from '../../src/utils/responsive';
+import { BuyerProfile } from '../../src/types/entities';
 
 const InfoItem = ({ icon, text, value }: { icon: string, text: string, value: string | number }) => {
     return (
@@ -22,7 +24,14 @@ const InfoItem = ({ icon, text, value }: { icon: string, text: string, value: st
     );
 };
 
-const EditableInfoItem = ({ label, value, onChangeText, keyboardType = 'default' }: any) => {
+interface EditableInfoItemProps {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  keyboardType?: 'default' | 'numeric' | 'email-address' | 'phone-pad';
+}
+
+const EditableInfoItem = ({ label, value, onChangeText, keyboardType = 'default' }: EditableInfoItemProps) => {
     return (
         <View style={styles.editableRow}>
             <Text style={styles.infoLabel}>{label}</Text>
@@ -51,16 +60,17 @@ export default function BuyerProfileScreen() {
     const [isGenderPickerVisible, setGenderPickerVisible] = useState(false);
 
     useEffect(() => {
-        if (profile) {
-            setEditedName(profile.nombre || '');
-            setEditedApellido(profile.apellido || '');
-            setEditedDireccion(profile.direccion || '');
-            setEditedGender(profile.gender || '');
-            if (profile.birth_date) {
-                setEditedBirthDate(new Date(profile.birth_date));
+        if (role === 'buyer' && profile) {
+            const buyerProfile = profile as BuyerProfile;
+            setEditedName(buyerProfile.nombre || '');
+            setEditedApellido(buyerProfile.apellido || '');
+            setEditedDireccion(buyerProfile.direccion || '');
+            setEditedGender(buyerProfile.gender || '');
+            if (buyerProfile.birth_date) {
+                setEditedBirthDate(new Date(buyerProfile.birth_date));
             }
         }
-    }, [profile]);
+    }, [profile, role]);
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -77,30 +87,14 @@ export default function BuyerProfileScreen() {
         }
     };
 
-    const uploadImage = async (uri: string, userId: string): Promise<string> => {
-        const fileExt = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-        const filePath = `buyer_avatars/${userId}/profile.${fileExt}`;
-        const response = await fetch(uri);
-        const blob = await response.blob();
-        const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, blob, { upsert: true, contentType: `image/${fileExt}` });
-        if (uploadError) {
-            throw new Error(`Error de Supabase Storage: ${uploadError.message}`);
-        }
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        if (!data.publicUrl) {
-            throw new Error("No se pudo obtener la URL pública del archivo.");
-        }
-        return data.publicUrl;
-    };
-
     const handleSaveProfile = async () => {
-        if (!session?.user) return;
+        if (!session?.user || role !== 'buyer' || !profile) return;
         setSaving(true);
-        let finalPhotoUrl = profile?.foto_perfil;
+        let finalPhotoUrl = profile.foto_perfil;
         try {
             if (selectedImageUri) {
-                const publicUrl = await uploadImage(selectedImageUri, session.user.id);
-                if (publicUrl) finalPhotoUrl = `${publicUrl}?t=${new Date().getTime()}`;
+                const publicUrl = await StorageService.uploadProfileImage(selectedImageUri, session.user.id, 'buyer');
+                finalPhotoUrl = publicUrl;
             }
             const updates = { 
                 nombre: editedName, 
@@ -123,7 +117,7 @@ export default function BuyerProfileScreen() {
         }
     };
     
-    const calculateAge = (birthDateString: string) => {
+    const calculateAge = (birthDateString: string | undefined) => {
         if (!birthDateString) return 'No establecido';
         const birthDate = new Date(birthDateString);
         const today = new Date();
@@ -139,9 +133,15 @@ export default function BuyerProfileScreen() {
         return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
     }
 
-    const displayName = editMode ? editedName : (profile.nombre || 'Usuario');
-    const displayAvatar = selectedImageUri || profile.foto_perfil;
-    const profileTypeText = role === 'buyer' ? 'Comprador Inteligente' : 'Vendedor';
+    if (role !== 'buyer') {
+        return <View style={styles.centered}><Text>Perfil no válido</Text></View>;
+    }
+
+    // At this point, profile is a BuyerProfile
+    const buyerProfile = profile as BuyerProfile;
+    const displayName = editMode ? editedName : (buyerProfile.nombre || 'Usuario');
+    const displayAvatar = selectedImageUri || buyerProfile.foto_perfil;
+    const profileTypeText = 'Comprador Inteligente';
 
     return (
         <SafeAreaView style={styles.container}>
@@ -154,10 +154,10 @@ export default function BuyerProfileScreen() {
                             </Avatar>
                         </View>
                     </TouchableOpacity>
-                    <Text style={styles.name}>{displayName} {editMode ? editedApellido : profile.apellido || ''}</Text>
+                    <Text style={styles.name}>{displayName} {editMode ? editedApellido : buyerProfile.apellido || ''}</Text>
                     <View style={styles.ratingContainer}>
                         <Icon name="star" type="material-community" color={COLORS.accent} size={20} />
-                        <Text style={styles.ratingText}>{profile.calificacion_comprador?.toFixed(1) || 'Sin calificación'}</Text>
+                        <Text style={styles.ratingText}>{buyerProfile.calificacion_comprador?.toFixed(1) || 'Sin calificación'}</Text>
                     </View>
                 </View>
 
@@ -192,10 +192,10 @@ export default function BuyerProfileScreen() {
                         </>
                     ) : (
                         <>
-                            <InfoItem icon="account-outline" text="Nombre Completo" value={`${profile.nombre || ''} ${profile.apellido || ''}`.trim() || 'No establecido'} />
-                            <InfoItem icon="map-marker-outline" text="Dirección" value={profile.direccion || 'No establecido'} />
-                            <InfoItem icon="cake-variant-outline" text="Edad" value={calculateAge(profile.birth_date)} />
-                            <InfoItem icon="gender-male-female" text="Género" value={profile.gender || 'No establecido'} />
+                            <InfoItem icon="account-outline" text="Nombre Completo" value={`${buyerProfile.nombre || ''} ${buyerProfile.apellido || ''}`.trim() || 'No establecido'} />
+                            <InfoItem icon="map-marker-outline" text="Dirección" value={buyerProfile.direccion || 'No establecido'} />
+                            <InfoItem icon="cake-variant-outline" text="Edad" value={calculateAge(buyerProfile.birth_date)} />
+                            <InfoItem icon="gender-male-female" text="Género" value={buyerProfile.gender || 'No establecido'} />
                         </>
                     )}
                 </Card>

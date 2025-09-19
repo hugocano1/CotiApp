@@ -7,9 +7,10 @@ import { useListOffers } from '../../../../src/hooks/useListOffers';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
 import { COLORS } from '../../../../src/constants/colors';
 import { scaleFont } from '../../../../src/utils/responsive';
+import { Offer } from '../../../../src/types/entities';
 
 // This component renders the new, detailed view for an offer
-const DetailedOfferView = ({ offer }: { offer: any }) => (
+const DetailedOfferView = ({ offer }: { offer: Offer }) => (
   <View>
     <FlatList
       data={offer.offer_items}
@@ -39,7 +40,7 @@ const DetailedOfferView = ({ offer }: { offer: any }) => (
 );
 
 // This component renders the old, simple view for legacy offers
-const SimpleOfferView = ({ offer }: { offer: any }) => (
+const SimpleOfferView = ({ offer }: { offer: Offer }) => (
     <View style={styles.simpleOfferContainer}>
         <Text style={styles.simplePrice}>${offer.price.toFixed(2)}</Text>
     </View>
@@ -49,6 +50,7 @@ export default function ListOffersScreen() {
   const { id: listId } = useLocalSearchParams();
   const router = useRouter();
   const { offers, loading } = useListOffers(listId as string);
+  const [isAccepting, setIsAccepting] = React.useState(false);
 
   const handleAcceptOffer = async (offerId: string) => {
     Alert.alert(
@@ -57,12 +59,15 @@ export default function ListOffersScreen() {
       [
         { text: "Cancelar", style: "cancel" },
         { text: "Sí, Aceptar", onPress: async () => {
+          setIsAccepting(true);
           try {
             await ShoppingListService.acceptOffer(offerId, listId as string);
             Alert.alert("¡Éxito!", "Has aceptado la oferta y se ha creado un nuevo pedido.");
             router.replace({ pathname: '/(buyer)/(mis-pedidos)' });
           } catch (error: any) {
             Alert.alert("Error", error.message);
+          } finally {
+            setIsAccepting(false);
           }
         }}
       ]
@@ -82,7 +87,7 @@ export default function ListOffersScreen() {
         ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>Aún no has recibido ofertas.</Text></View>}
         renderItem={({ item }) => (
           <Card containerStyle={styles.card}>
-            <Card.Title>{item.sellers?.stores?.name || 'Vendedor Desconocido'}</Card.Title>
+            <Card.Title>{item.seller_profiles?.stores?.name || 'Vendedor Desconocido'}</Card.Title>
             <Card.Divider />
 
             {/* Conditional Rendering: Check if offer_items exist */}
@@ -99,6 +104,7 @@ export default function ListOffersScreen() {
               onPress={() => handleAcceptOffer(item.id)}
               buttonStyle={styles.acceptButton}
               icon={<Icon name="check-circle-outline" type="material-community" color="white"/>}
+              disabled={isAccepting}
             />
           </Card>
         )}
@@ -122,7 +128,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.grayLight,
+    borderBottomColor: COLORS.gray,
   },
   itemDetailsContainer: { flex: 1, paddingRight: 5 },
   itemName: {

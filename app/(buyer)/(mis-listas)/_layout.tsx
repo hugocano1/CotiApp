@@ -1,8 +1,12 @@
 // Ruta: app/(buyer)/(mis-listas)/_layout.tsx
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { COLORS } from '../../../src/constants/colors';
+import { TouchableOpacity } from 'react-native';
+import { Icon } from '@rneui/themed';
 
 export default function MisListasLayout() {
+  const router = useRouter();
+
   return (
     <Stack
       screenOptions={{
@@ -10,15 +14,27 @@ export default function MisListasLayout() {
         headerTintColor: COLORS.white,
       }}
     >
-      {/* ✅ CORRECCIÓN: Nos aseguramos de que el header de la pantalla de índice sea visible */}
       <Stack.Screen 
         name="index" 
         options={{ 
+          headerShown: true,
           title: "Mis listas de compras",
-          headerShown: true 
         }} 
       />
-      <Stack.Screen name="list-details/[id]" options={{ title: "Detalles de Lista" }} />
+      <Stack.Screen 
+        name="list-details/[id]" 
+        options={{ 
+          title: "Detalles de Lista",
+          headerLeft: () => (
+            <TouchableOpacity 
+              onPress={() => router.replace('/(buyer)/(mis-listas)/')}
+              style={{ marginRight: 15, padding: 5 }}
+            >
+              <Icon name="arrow-left" type="material-community" color={COLORS.white} />
+            </TouchableOpacity>
+          ),
+        }} 
+      />
     </Stack>
   );
 }
