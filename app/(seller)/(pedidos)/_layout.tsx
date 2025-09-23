@@ -26,7 +26,11 @@ export default function SellerOrdersLayout() {
 
       <Stack.Screen 
         name="order-details/[id]" 
-        options={{ title: "Detalles del Pedido" }} 
+        options={{ 
+          title: "Detalles del Pedido",
+          headerShown: true,
+          headerBackTitle: 'Volver'
+        }} 
       />
     </Stack>
   );

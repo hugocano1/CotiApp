@@ -72,6 +72,7 @@ export interface OfferItem {
 export interface Offer {
   id: string;
   price: number;
+  shipping_cost?: number; // ✅ AÑADIDO
   status: 'pending' | 'accepted' | 'rejected';
   created_at: string; // ISO date string
   notes?: string;
@@ -108,6 +109,7 @@ export interface Order {
   total_price: number;
   status: 'confirmed' | 'enviado' | 'completed';
   created_at: string; // ISO date string
+  pickup_code?: string; // ✅ AÑADIDO
   shopping_list_id: string;
   shopping_lists?: ShoppingList; // The original shopping list
   seller_id: string;
@@ -115,4 +117,17 @@ export interface Order {
   buyer_id: string;
   buyer_profiles?: BuyerProfile; // The buyer involved in the order
   rating_for_seller?: number;
+}
+
+/**
+ * Represents an in-app notification.
+ */
+export interface Notification {
+  id: number;
+  user_id: string;
+  title: string;
+  body: string;
+  data?: { [key: string]: any }; // Para datos adicionales como orderId
+  is_read: boolean;
+  created_at: string; // ISO date string
 }

@@ -1,8 +1,12 @@
 // app/(buyer)/(mis-pedidos)/_layout.tsx
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { COLORS } from '../../../src/constants/colors';
+import { TouchableOpacity } from 'react-native';
+import { Icon } from '@rneui/themed';
 
 export default function MisPedidosLayout() {
+  const router = useRouter();
+
   return (
     <Stack
       screenOptions={{
@@ -10,7 +14,20 @@ export default function MisPedidosLayout() {
         headerTintColor: COLORS.white,
       }}
     >
-      <Stack.Screen name="index" options={{ title: "Mis Pedidos" }} />
+      <Stack.Screen 
+        name="index" 
+        options={{ 
+          title: "Mis Pedidos",
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/(buyer)/notifications')}
+              style={{ marginRight: 15 }}
+            >
+              <Icon name="bell-outline" type="material-community" color={COLORS.white} />
+            </TouchableOpacity>
+          ),
+        }} 
+      />
       {/* ✅ AÑADIMOS LA NUEVA PANTALLA DE DETALLES */}
       <Stack.Screen name="order-details/[id]" options={{ title: "Detalles de la Oferta" }} />
       <Stack.Screen name="pedido-detalle/[id]" options={{ title: "Detalles del Pedido" }} />

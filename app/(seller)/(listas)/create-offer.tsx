@@ -7,6 +7,7 @@ import { COLORS } from '../../../src/constants/colors';
 import { Button, Card, Icon } from '@rneui/themed';
 import { scaleFont } from '../../../src/utils/responsive';
 import { ShoppingList, ShoppingListItem, OfferItem } from '../../../src/types/entities';
+import { formatCurrency } from '../../../src/utils/formatters';
 
 interface OfferItemCardProps {
     item: ShoppingListItem;
@@ -65,6 +66,7 @@ export default function CreateOfferScreen() {
 
     const [list, setList] = useState<ShoppingList | null>(null);
     const [itemPrices, setItemPrices] = useState<Record<string, string>>({});
+    const [shippingCost, setShippingCost] = useState('');
     const notesRef = useRef('');
     const flatListRef = useRef<FlatList<ShoppingListItem>>(null);
     const [loading, setLoading] = useState(true);
@@ -95,13 +97,18 @@ export default function CreateOfferScreen() {
         setItemPrices(prev => ({ ...prev, [itemId]: price }));
     }, []);
 
-    const total = useMemo(() => {
+    const totalItemsPrice = useMemo(() => {
         if (!list) return 0;
         return list.items.reduce((acc, item) => {
             const price = parseFloat(itemPrices[item.id] || '0');
             return acc + (price * item.quantity);
         }, 0);
     }, [itemPrices, list]);
+
+    const finalTotal = useMemo(() => {
+        const cost = parseFloat(shippingCost) || 0;
+        return totalItemsPrice + cost;
+    }, [totalItemsPrice, shippingCost]);
 
     const handleNotesFocus = () => {
         setTimeout(() => {
@@ -130,9 +137,10 @@ export default function CreateOfferScreen() {
         try {
             await ShoppingListService.createDetailedOffer({
                 shopping_list_id: listId!,
-                total_price: total,
+                total_price: finalTotal,
                 notes: notesRef.current,
                 items: itemsWithPrices,
+                shipping_cost: parseFloat(shippingCost) || 0, // Add shipping cost
             });
 
             Alert.alert("¡Éxito!", "Tu oferta ha sido enviada correctamente.");
@@ -142,7 +150,7 @@ export default function CreateOfferScreen() {
         } finally {
             setSubmitting(false);
         }
-    }, [list, itemPrices, total, router]);
+    }, [list, itemPrices, finalTotal, shippingCost, router]);
 
     const renderItem = useCallback(({ item }: { item: ShoppingListItem }) => (
         <OfferItemCard
@@ -154,7 +162,19 @@ export default function CreateOfferScreen() {
 
     const renderFooter = useCallback(() => (
         <View style={styles.summaryContainer}>
-            <Text style={styles.totalText}>TOTAL: ${total.toFixed(2)}</Text>
+            {list?.delivery_type === 'delivery' && (
+                <View style={styles.shippingCostContainer}>
+                    <Text style={styles.shippingCostLabel}>Costo de Envío:</Text>
+                    <TextInput
+                        style={styles.shippingCostInput}
+                        placeholder="$0"
+                        value={shippingCost}
+                        onChangeText={setShippingCost}
+                        keyboardType="numeric"
+                    />
+                </View>
+            )}
+            <Text style={styles.totalText}>TOTAL: {formatCurrency(finalTotal)}</Text>
             <TextInput
                 style={styles.notesInput}
                 placeholder="Notas generales de la oferta (opcional)"
@@ -172,7 +192,7 @@ export default function CreateOfferScreen() {
                 icon={<Icon name="send-outline" type="material-community" color="white" size={18}/>}
             />
         </View>
-    ), [total, submitting, handleSubmitOffer]);
+    ), [finalTotal, shippingCost, submitting, handleSubmitOffer, list?.delivery_type]);
 
 
     if (loading) {
@@ -241,4 +261,7 @@ const styles = StyleSheet.create({
     notesInput: { height: 60, textAlignVertical: 'top', borderColor: COLORS.gray, borderWidth: 1, padding: 10, borderRadius: 8, marginBottom: 12, backgroundColor: '#f8f9fa', fontSize: scaleFont(13) },
     button: { borderRadius: 8, paddingVertical: 10 },
     buttonTitle: { fontSize: scaleFont(15) },
+    shippingCostContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+    shippingCostLabel: { fontSize: scaleFont(16), color: COLORS.text, fontWeight: 'bold' },
+    shippingCostInput: { height: 40, width: 100, borderColor: COLORS.gray, borderWidth: 1, paddingHorizontal: 8, borderRadius: 6, backgroundColor: COLORS.white, textAlign: 'right', fontSize: scaleFont(16), fontWeight: 'bold' },
 });

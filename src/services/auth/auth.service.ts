@@ -20,7 +20,6 @@ export class AuthService {
 
   static async signUp(email: string, password: string, userType: 'buyer' | 'seller') {
     // Se mantiene la validación de la contraseña
-    Alert.alert('Dentro de AuthService.signUp', `Rol recibido en el servicio: ${userType}`);
     if (!PASSWORD_REGEX.test(password)) {
       throw new Error('La contraseña debe tener 8+ caracteres, 1 mayúscula y 1 símbolo');
     }

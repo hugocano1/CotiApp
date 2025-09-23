@@ -1,10 +1,12 @@
 // Ruta: app/(buyer)/_layout.tsx
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { Icon } from '@rneui/themed';
 import { COLORS } from '../../src/constants/colors';
 // ✅ CORRECCIÓN: Importaciones movidas al principio del archivo
 import { TouchableOpacity, StyleSheet } from 'react-native';
+
+import { useUnreadNotifications } from '../../src/hooks/useUnreadNotifications';
 
 // ✅ CORRECCIÓN: Definición de estilos movida antes de ser usada
 const styles = StyleSheet.create({
@@ -21,7 +23,28 @@ const styles = StyleSheet.create({
   },
 });
 
+// Componente para el ícono de la campana que se actualiza
+const NotificationIcon = () => {
+  const router = useRouter();
+  const { unreadCount } = useUnreadNotifications();
+
+  return (
+    <TouchableOpacity
+      onPress={() => router.push('/(buyer)/notifications')}
+      style={{ marginRight: 15 }}
+    >
+      <Icon 
+        name={unreadCount > 0 ? 'bell' : 'bell-outline'} 
+        type="material-community" 
+        color={COLORS.primary} 
+      />
+    </TouchableOpacity>
+  );
+};
+
 export default function BuyerTabLayout() {
+  const router = useRouter();
+
   return (
     <Tabs
       screenOptions={{
@@ -34,7 +57,8 @@ export default function BuyerTabLayout() {
         options={{ 
           title: 'Resumen', 
           headerShown: true, // Mostramos explícitamente el header para esta pantalla
-          tabBarIcon: ({ color }) => <Icon name="home" type="material-community" color={color} /> 
+          tabBarIcon: ({ color }) => <Icon name="home" type="material-community" color={color} />, 
+          headerRight: () => <NotificationIcon />,
         }} 
       />
       

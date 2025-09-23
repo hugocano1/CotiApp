@@ -75,4 +75,20 @@ export class OrderService {
     }
     return { success: true };
   }
+
+  static async cancelOrder(orderId: string, reason: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Usuario no autenticado.");
+
+    const { error } = await supabase.rpc('cancel_order', {
+      p_order_id: orderId,
+      p_reason: reason,
+    });
+
+    if (error) {
+      console.error("Error canceling order:", error);
+      throw new Error(error.message);
+    }
+    return { success: true };
+  }
 }

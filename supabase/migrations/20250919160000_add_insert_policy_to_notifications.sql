@@ -1,0 +1,1 @@
+CREATE POLICY "Allow authenticated users to insert notifications." ON public.notifications FOR INSERT TO authenticated WITH CHECK (true);

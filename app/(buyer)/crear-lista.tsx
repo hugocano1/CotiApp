@@ -1,7 +1,7 @@
 // Ruta: app/(buyer)/crear-lista.tsx
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ScrollView, Platform, Image } from 'react-native';
-import { useRouter, useNavigation } from 'expo-router';
+import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import { Input, Button, Icon, BottomSheet, ListItem, ButtonGroup } from '@rneui/themed';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS } from '../../src/constants/colors';
@@ -33,6 +33,24 @@ export default function CreateListScreen() {
   const [isUnitPickerVisible, setIsUnitPickerVisible] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setListTitle('');
+      setMinBudget('');
+      setMaxBudget('');
+      setDeliveryDate(new Date());
+      setDeliveryTypeIndex(0);
+      setItems([]);
+      setDeliveryAddressText('');
+      setNewItemName('');
+      setNewItemQty(1);
+      setNewItemUnit('ud');
+      setNewItemBrand('');
+      setNewItemNotes('');
+      setLoading(false);
+    }, [])
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({

@@ -23,16 +23,16 @@ const styles = StyleSheet.create({
   infoRow: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    marginVertical: 8,
+    marginVertical: 6,
   },
   infoTextLabel: { 
     marginLeft: 15, 
-    fontSize: scaleFont(16), 
+    fontSize: scaleFont(14), 
     color: COLORS.gray 
   },
   infoTextValue: { 
     marginLeft: 8, 
-    fontSize: scaleFont(16), 
+    fontSize: scaleFont(14), 
     fontWeight: '500',
     flex: 1,
     textAlign: 'right',

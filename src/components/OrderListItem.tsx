@@ -5,6 +5,7 @@ import { Card, Avatar, Icon } from '@rneui/themed';
 import { COLORS } from '../constants/colors';
 import { scaleFont } from '../utils/responsive';
 import { Order } from '../types/entities';
+import { formatCurrency } from '../utils/formatters';
 
 type Props = {
   order: Order;
@@ -85,7 +86,7 @@ export function OrderListItem({ order, userRole }: Props) {
           </Text>
 
           <View style={styles.bottomRow}>
-            <Text style={styles.price}>${order.total_price}</Text>
+            <Text style={styles.price}>{formatCurrency(order.total_price)}</Text>
             {rating != null && (
               <View style={styles.ratingContainer}>
                 <Icon

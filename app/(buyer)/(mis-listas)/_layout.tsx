@@ -19,6 +19,14 @@ export default function MisListasLayout() {
         options={{ 
           headerShown: true,
           title: "Mis listas de compras",
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/(buyer)/notifications')}
+              style={{ marginRight: 15 }}
+            >
+              <Icon name="bell-outline" type="material-community" color={COLORS.white} />
+            </TouchableOpacity>
+          ),
         }} 
       />
       <Stack.Screen 

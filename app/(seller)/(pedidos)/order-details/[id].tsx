@@ -8,39 +8,15 @@ import { COLORS } from '../../../../src/constants/colors';
 import { InfoRow } from '../../../../src/components/InfoRow';
 import { scaleFont } from '../../../../src/utils/responsive';
 import { Order, ShoppingListItem } from '../../../../src/types/entities';
-
-const formatCurrency = (value: number) => {
-    return `$${Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
-};
-
-const StatusDisplay = ({ status }: { status: string }) => {
-    const statusMap = {
-        confirmed: { text: 'Por Despachar', color: COLORS.accent, icon: 'package-variant' }, 
-        enviado: { text: 'En Camino', color: COLORS.primary, icon: 'truck-delivery' },
-        completed: { text: 'Completado', color: COLORS.secondary, icon: 'check-circle' },
-        default: { text: status, color: COLORS.gray, icon: 'help-circle' },
-    };
-    const currentStatus = statusMap[status as keyof typeof statusMap] || statusMap.default;
-
-    return (
-        <View style={[styles.statusDisplay, { backgroundColor: currentStatus.color }]}>
-            <Icon name={currentStatus.icon} type="material-community" color={COLORS.white} size={18} />
-            <Text style={styles.statusDisplayText}>{currentStatus.text}</Text>
-        </View>
-    );
-};
-
-const CardTitle = ({ title, iconName }: { title: string, iconName?: string }) => (
-    <View style={styles.cardTitleContainer}>
-        {iconName && <Icon name={iconName} type="material-community" color={COLORS.primary} size={20} containerStyle={{ marginRight: 8 }} />}
-        <Text style={styles.cardTitle}>{title}</Text>
-    </View>
-);
+import { formatCurrency } from '../../../../src/utils/formatters';
+import { StatusDisplay, CardTitle } from '../../../../src/components/OrderComponents';
+import { RatingModal } from '../../../../src/components/RatingModal';
 
 export default function SellerOrderDetailsScreen() {
   const { id: orderId } = useLocalSearchParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRatingModalVisible, setRatingModalVisible] = useState(false);
 
   const fetchDetails = useCallback(() => {
     if (typeof orderId === 'string') {
@@ -83,6 +59,13 @@ export default function SellerOrderDetailsScreen() {
     );
   };
 
+  const handleCloseRatingModal = (submitted: boolean) => {
+    setRatingModalVisible(false);
+    if (submitted) {
+      fetchDetails();
+    }
+  };
+
   if (loading) {
     return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
   }
@@ -109,6 +92,10 @@ export default function SellerOrderDetailsScreen() {
         <InfoRow icon="cash" label="Valor Total" value={formatCurrency(order.total_price)} />
         <InfoRow icon="calendar-clock" label="Fecha de Despacho" value={deliveryDate} />
         <InfoRow icon="truck" label="Método de Entrega" value={deliveryType} />
+        {/* ✅ MOSTRAR CÓDIGO DE RECOGIDA */}
+        {listInfo?.delivery_type === 'pickup' && order.pickup_code && (
+            <InfoRow icon="key-variant" label="Código de Recogida" value={order.pickup_code} />
+        )}
         {listInfo?.delivery_type === 'delivery' && deliveryAddress && (
             <InfoRow icon="map-marker" label="Dirección" value={deliveryAddress} />
         )}
@@ -130,7 +117,7 @@ export default function SellerOrderDetailsScreen() {
       </Card>
 
       <Card containerStyle={styles.card}>
-        <CardTitle title="¿El pedido está listo para despachar?" />
+        <CardTitle title="Gestionar Pedido" />
         <Card.Divider />
         {order.status === 'confirmed' && (
            <Button 
@@ -144,28 +131,35 @@ export default function SellerOrderDetailsScreen() {
         {order.status === 'enviado' && (
            <Text style={styles.infoText}>Pedido en camino. Esperando confirmación del comprador.</Text>
         )}
-        {order.status === 'completed' && (
-           <Text style={styles.infoText}>¡Este pedido ha sido completado!</Text>
+        {order.status === 'completed' && !order.rating_for_buyer && (
+           <Button title="Calificar a Comprador" onPress={() => setRatingModalVisible(true)} buttonStyle={{backgroundColor: COLORS.accent}} titleStyle={{color: COLORS.primary, fontWeight: 'bold'}} />
+        )}
+        {order.status === 'completed' && order.rating_for_buyer && (
+           <Text style={styles.infoText}>Ya has calificado a este comprador. ¡Gracias!</Text>
         )}
       </Card>
+
+      <RatingModal 
+        isVisible={isRatingModalVisible}
+        onClose={handleCloseRatingModal}
+        orderId={order.id}
+        ratedUserId={order.buyer_id}
+        userType="seller"
+      />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background, paddingVertical: 10 },
+  container: { flex: 1, backgroundColor: COLORS.background, paddingVertical: 8 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  card: { borderRadius: 16, marginHorizontal: 15, marginBottom: 10, paddingBottom: 15 },
-  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { fontSize: scaleFont(20), fontWeight: 'bold', color: COLORS.primary, flex: 1 },
-  statusDisplay: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 20 },
-  statusDisplayText: { color: COLORS.white, fontSize: scaleFont(12), fontWeight: 'bold', marginLeft: 6 },
-  cardTitleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  cardTitle: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.primary },
-  itemContainer: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  card: { borderRadius: 12, marginHorizontal: 12, marginBottom: 8, paddingBottom: 10 },
+  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  headerTitle: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.primary, flex: 1 },
+  itemContainer: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  itemName: { fontSize: scaleFont(16), fontWeight: '500', color: COLORS.text, flex: 1 },
-  itemQuantity: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.primary },
-  itemDetails: { fontSize: scaleFont(14), color: COLORS.gray, marginTop: 5 },
+  itemName: { fontSize: scaleFont(14), fontWeight: '500', color: COLORS.text, flex: 1 },
+  itemQuantity: { fontSize: scaleFont(14), fontWeight: 'bold', color: COLORS.primary },
+  itemDetails: { fontSize: scaleFont(12), color: COLORS.gray, marginTop: 4 },
   infoText: { textAlign: 'center', color: COLORS.gray, fontStyle: 'italic', padding: 10}
 });

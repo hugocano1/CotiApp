@@ -7,6 +7,8 @@ import { ShoppingListService } from '../../../../src/services/shoppingList.servi
 import { COLORS } from '../../../../src/constants/colors';
 import { scaleFont } from '../../../../src/utils/responsive';
 import { ShoppingList, ShoppingListItem, Offer, OfferItem } from '../../../../src/types/entities';
+import { translateDeliveryType } from '../../../../src/utils/translations';
+import { formatCurrency } from '../../../../src/utils/formatters';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -28,9 +30,16 @@ const OfferAccordionCard = ({ offer, isExpanded, onToggle, onAccept }: { offer: 
       {offer.offer_items.map((item: OfferItem, index: number) => (
         <View key={item.id} style={[styles.offerItemRow, index % 2 === 1 && styles.offerItemRowAlt]}>
           <Text style={styles.offerItemName}>{item.quantity}x {item.item_name}</Text>
-          <Text style={styles.offerItemPrice}>${(item.unit_price * item.quantity).toFixed(2)}</Text>
+          <Text style={styles.offerItemPrice}>{formatCurrency(item.unit_price * item.quantity)}</Text>
         </View>
       ))}
+      {/* ✅ MOSTRAR COSTO DE ENVÍO */}
+      {/* {offer.shipping_cost && offer.shipping_cost > 0 && (
+        <View style={[styles.offerItemRow, styles.shippingCostRow]}>
+          <Text style={styles.offerItemName}>Costo de envío</Text>
+          <Text style={styles.offerItemPrice}>{formatCurrency(offer.shipping_cost)}</Text>
+        </View>
+      )} */}
       <Card.Divider style={{marginTop: 10}}/>
       {offer.notes && <Text style={styles.notes}>Notas del vendedor: {offer.notes}</Text>}
       <Button
@@ -49,10 +58,10 @@ const OfferAccordionCard = ({ offer, isExpanded, onToggle, onAccept }: { offer: 
         <View style={styles.summaryRow}>
             <View style={styles.summaryStore}>
                 <Icon name="storefront-outline" type="material-community" color={COLORS.primary} size={22} />
-                <Text style={styles.storeName}>{offer.sellers?.stores?.name || 'Vendedor'}</Text>
+                <Text style={styles.storeName}>{offer.seller_profiles?.stores?.name || 'Vendedor'}</Text>
             </View>
             <View style={styles.summaryPriceContainer}>
-                <Text style={styles.summaryPrice}>${offer.price.toFixed(2)}</Text>
+                <Text style={styles.summaryPrice}>{formatCurrency(offer.price)}</Text>
                 <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} type="material-community" color={COLORS.gray} size={22}/>
             </View>
         </View>
@@ -119,6 +128,28 @@ export default function BuyerListDetailsScreen() {
     );
   };
 
+  const handleDeleteList = async () => {
+    Alert.alert(
+      "Eliminar Lista",
+      "¿Estás seguro de que quieres eliminar esta lista de compras? Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Sí, Eliminar", onPress: async () => {
+          setLoading(true);
+          try {
+            await ShoppingListService.deleteShoppingList(listId as string);
+            Alert.alert("¡Éxito!", "La lista de compras ha sido eliminada.");
+            router.replace({ pathname: '/(buyer)/(mis-listas)' });
+          } catch (error: any) {
+            Alert.alert("Error", error.message);
+          } finally {
+            setLoading(false);
+          }
+        }}
+      ]
+    );
+  };
+
   if (loading || isAccepting) {
     return (
       <View style={styles.centered}>
@@ -132,6 +163,8 @@ export default function BuyerListDetailsScreen() {
     return <View style={styles.centered}><Text>No se encontraron los detalles de la lista.</Text></View>;
   }
 
+  const canDelete = listDetails.status === 'active' && offers.length === 0;
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.header}>{listDetails.title || 'Detalles de la Lista'}</Text>
@@ -140,8 +173,8 @@ export default function BuyerListDetailsScreen() {
         <Card.Title style={styles.cardTitle}>Resumen de tu Lista</Card.Title>
         <Card.Divider/>
         <InfoRow icon="information-outline" text="Estado" value={listDetails.status} />
-        <InfoRow icon="cash" text="Presupuesto" value={`${listDetails.min_budget || 'N/A'} - ${listDetails.max_budget || 'N/A'}`} />
-        <InfoRow icon="truck-delivery-outline" text="Tipo de Entrega" value={listDetails.delivery_type || 'No especificado'} />
+        <InfoRow icon="cash" text="Presupuesto" value={`${formatCurrency(listDetails.min_budget)} - ${formatCurrency(listDetails.max_budget)}`} />
+        <InfoRow icon="truck-delivery-outline" text="Tipo de Entrega" value={translateDeliveryType(listDetails.delivery_type)} />
       </Card>
 
       <Card containerStyle={styles.card}>
@@ -175,6 +208,15 @@ export default function BuyerListDetailsScreen() {
           <Text style={styles.noOffersText}>Aún no has recibido ofertas para esta lista.</Text>
         )}
       </View>
+
+      {canDelete && (
+        <Button 
+          title="Borrar Lista"
+          onPress={handleDeleteList}
+          buttonStyle={styles.deleteButton}
+          icon={<Icon name="delete-outline" type="material-community" color="white" containerStyle={{marginRight: 10}} />}
+        />
+      )}
     </ScrollView>
   );
 }
@@ -208,9 +250,11 @@ const styles = StyleSheet.create({
     offerItemsContainer: { paddingTop: 0, paddingBottom: 10 },
     offerItemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 15 },
     offerItemRowAlt: { backgroundColor: '#f8f9fa' },
+    shippingCostRow: { borderTopWidth: 1, borderTopColor: '#eee', marginTop: 5, paddingTop: 10 },
     offerItemName: { fontSize: scaleFont(13), color: COLORS.text, flex: 1 },
     offerItemPrice: { fontSize: scaleFont(13), fontWeight: '500', color: COLORS.text },
     notes: { fontStyle: 'italic', color: COLORS.gray, marginTop: 10, marginBottom: 15, fontSize: scaleFont(12), paddingHorizontal: 15 },
     acceptButton: { backgroundColor: COLORS.secondary, borderRadius: 8, marginHorizontal: 15 },
     acceptButtonTitle: { fontSize: scaleFont(14) },
+    deleteButton: { backgroundColor: COLORS.danger, borderRadius: 8, marginHorizontal: 15, marginTop: 20 },
 });

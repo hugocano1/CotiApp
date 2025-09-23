@@ -5,6 +5,7 @@ import { Card, Avatar } from '@rneui/themed';
 import { COLORS } from '../constants/colors';
 import { scaleFont } from '../utils/responsive';
 import { Offer } from '../types/entities';
+import { formatCurrency } from '../utils/formatters';
 
 const statusConfig = {
   pending: { text: 'Enviada', color: COLORS.accent },
@@ -45,7 +46,7 @@ export function OfferListItem({ offer }: { offer: Offer }) {
           <Text style={styles.subtitle} numberOfLines={1}>
             {offer.shopping_lists?.title || 'Lista no disponible'}
           </Text>
-          <Text style={styles.price}>${offer.price}</Text>
+          <Text style={styles.price}>{formatCurrency(offer.price)}</Text>
         </View>
         <View
           style={[

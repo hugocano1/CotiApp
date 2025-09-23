@@ -7,6 +7,7 @@ import { SplashScreen, useRouter, useSegments, Stack } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { useAuth } from '../src/hooks/useAuth';
 import { useNotifications } from '@/src/hooks/useNotifications';
+import * as Notifications from 'expo-notifications';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,6 +28,22 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [authLoading, fontsLoaded, fontError]);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const orderId = response.notification.request.content.data?.orderId;
+      if (orderId) {
+        const userRole = session?.user?.user_metadata?.user_type;
+        if (userRole === 'buyer') {
+          router.push(`/(buyer)/mis-pedidos/pedido-detalle/${orderId}`);
+        } else if (userRole === 'seller') {
+          router.push(`/(seller)/pedidos/order-details/${orderId}`);
+        }
+      }
+    });
+
+    return () => subscription.remove();
+  }, [session, router]);
 
   useEffect(() => {
     if (authLoading || !fontsLoaded) return;

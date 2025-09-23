@@ -7,6 +7,7 @@ import { ShoppingListService } from '../../../../src/services/shoppingList.servi
 import { COLORS } from '../../../../src/constants/colors';
 import { scaleFont } from '../../../../src/utils/responsive';
 import { ShoppingList, ShoppingListItem } from '../../../../src/types/entities';
+import { translateDeliveryType } from '../../../../src/utils/translations';
 
 interface InfoRowProps {
   icon: string;
@@ -55,7 +56,7 @@ export default function SellerListDetailsScreen() {
                 <Card.Divider/>
                 <InfoRow icon="calendar-outline" text="Fecha Despacho:" value={dispatchDate} />
                 <InfoRow icon="cash" text="Presupuesto:" value={`$${listDetails.min_budget || 'N/A'} - $${listDetails.max_budget || 'N/A'}`} />
-                <InfoRow icon="truck-delivery-outline" text="Entrega:" value={listDetails.delivery_type || 'N/A'} />
+                <InfoRow icon="truck-delivery-outline" text="Entrega:" value={translateDeliveryType(listDetails.delivery_type)} />
             </Card>
             
             <Text style={styles.sectionHeader}>Artículos Solicitados</Text>

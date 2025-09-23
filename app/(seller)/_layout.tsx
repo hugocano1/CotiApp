@@ -1,11 +1,13 @@
 // Ruta: app/(seller)/_layout.tsx
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { Icon } from '@rneui/themed';
 import { COLORS } from '../../src/constants/colors';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 
 export default function SellerTabLayout() {
+  const router = useRouter();
+
   return (
     <Tabs
       screenOptions={{
@@ -17,11 +19,18 @@ export default function SellerTabLayout() {
         name="index" 
         options={{ 
           title: 'Resumen', 
-          // ✅ CORRECCIÓN: Mostramos el header aquí
           headerShown: true, 
           headerStyle: { backgroundColor: COLORS.primary },
           headerTintColor: COLORS.white,
-          tabBarIcon: ({ color }) => <Icon name="home" type="material-community" color={color} /> 
+          tabBarIcon: ({ color }) => <Icon name="home" type="material-community" color={color} />,
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/(seller)/notifications')}
+              style={{ marginRight: 15 }}
+            >
+              <Icon name="bell-outline" type="material-community" color={COLORS.white} />
+            </TouchableOpacity>
+          ),
         }} 
       />
       {/* ... El resto de tus Tabs.Screen se mantienen igual ... */}

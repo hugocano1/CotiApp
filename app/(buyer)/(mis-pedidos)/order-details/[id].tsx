@@ -8,6 +8,7 @@ import { ShoppingListService } from '../../../../src/services/shoppingList.servi
 import { COLORS } from '../../../../src/constants/colors';
 import { scaleFont } from '../../../../src/utils/responsive';
 import { Offer } from '../../../../src/types/entities';
+import { formatCurrency } from '../../../../src/utils/formatters';
 
 // This component renders the new, detailed view for an offer
 const DetailedOfferView = ({ offer }: { offer: Offer }) => (
@@ -27,14 +28,14 @@ const DetailedOfferView = ({ offer }: { offer: Offer }) => (
                 </Text>
             )}
           </View>
-          <Text style={styles.itemPrice}>${(item.unit_price * item.quantity).toFixed(2)}</Text>
+          <Text style={styles.itemPrice}>{formatCurrency(item.unit_price * item.quantity)}</Text>
         </View>
       )}
     />
     <Card.Divider style={{ marginTop: 15 }}/>
     <View style={styles.totalRow}>
         <Text style={styles.totalLabel}>Total de la Oferta:</Text>
-        <Text style={styles.totalPrice}>${offer.price.toFixed(2)}</Text>
+        <Text style={styles.totalPrice}>{formatCurrency(offer.price)}</Text>
     </View>
   </View>
 );
@@ -42,7 +43,7 @@ const DetailedOfferView = ({ offer }: { offer: Offer }) => (
 // This component renders the old, simple view for legacy offers
 const SimpleOfferView = ({ offer }: { offer: Offer }) => (
     <View style={styles.simpleOfferContainer}>
-        <Text style={styles.simplePrice}>${offer.price.toFixed(2)}</Text>
+        <Text style={styles.simplePrice}>{formatCurrency(offer.price)}</Text>
     </View>
 );
 

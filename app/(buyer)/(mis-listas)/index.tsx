@@ -8,6 +8,7 @@ import { ShoppingListItem } from '../../../src/components/ShoppingListItem';
 import { ButtonGroup, Icon } from '@rneui/themed';
 import { scaleFont } from '../../../src/utils/responsive';
 import { Offer } from '../../../src/types/entities';
+import { formatCurrency } from '../../../src/utils/formatters';
 
 const cardColors = [COLORS.secondary, COLORS.accent, '#e76f51', '#f4a261', '#2a9d8f'];
 
@@ -27,7 +28,7 @@ const OfferSummaryCard = ({ offer, index }: { offer: Partial<Offer>, index: numb
                     <Icon name="store" type="material-community" color={COLORS.white} size={16} />
                     <Text style={styles.offerStore} numberOfLines={1}>{storeName}</Text>
                 </View>
-                <Text style={styles.offerPrice}>${Math.round(offer.price || 0)}</Text>
+                <Text style={styles.offerPrice}>{formatCurrency(offer.price)}</Text>
             </TouchableOpacity>
         </Link>
     );

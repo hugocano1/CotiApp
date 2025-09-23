@@ -1,34 +1,59 @@
 // app/(auth)/signup.tsx
-
 import React, { useState } from 'react';
 import { View, TextInput, Alert, ActivityIndicator, Text, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Link } from 'expo-router';
 import { AuthService } from '../../src/services/auth/auth.service';
 import { COLORS } from '../../src/constants/colors';
-import { scaleFont } from '../../src/utils/responsive'; // Importamos nuestra función de escalado
+import { scaleFont } from '../../src/utils/responsive';
+
+// Regex for password strength
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
 
 export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const validate = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!email) {
+      newErrors.email = 'El correo es obligatorio';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'El formato del correo no es válido';
+    }
+
+    if (!password) {
+      newErrors.password = 'La contraseña es obligatoria';
+    } else if (!PASSWORD_REGEX.test(password)) {
+      newErrors.password = 'La contraseña debe tener 8+ caracteres, 1 mayúscula y 1 símbolo.';
+    }
+
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Las contraseñas no coinciden';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSignUp = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Completa todos los campos');
-      return;
-    }
+    if (!validate()) return;
+
     setLoading(true);
     try {
       const user = await AuthService.signUp(email, password, role);
       if (user) {
         Alert.alert(
           'Registro Exitoso',
-          'Por favor, revisa tu email para confirmar tu cuenta. Serás redirigido al inicio de sesión.'
+          'Por favor, revisa tu email para confirmar tu cuenta.'
         );
       }
     } catch (error: unknown) {
-      Alert.alert('Error en el Registro', error instanceof Error ? error.message : String(error));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setErrors({ general: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -45,24 +70,37 @@ export default function SignupScreen() {
         
         <Text style={styles.label}>Correo electrónico</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.email ? styles.inputError : null]}
           placeholder="tu@email.com"
           placeholderTextColor={COLORS.gray}
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => { setEmail(text); if (errors.email) validate(); }}
           keyboardType="email-address"
           autoCapitalize="none"
         />
+        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
         
         <Text style={styles.label}>Contraseña</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.password ? styles.inputError : null]}
           placeholder="••••••••"
           placeholderTextColor={COLORS.gray}
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => { setPassword(text); if (errors.password) validate(); }}
           secureTextEntry
         />
+        {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+
+        <Text style={styles.label}>Confirmar Contraseña</Text>
+        <TextInput
+          style={[styles.input, errors.confirmPassword ? styles.inputError : null]}
+          placeholder="••••••••"
+          placeholderTextColor={COLORS.gray}
+          value={confirmPassword}
+          onChangeText={(text) => { setConfirmPassword(text); if (errors.confirmPassword) validate(); }}
+          secureTextEntry
+        />
+        {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
         
         <Text style={styles.label}>Selecciona tu rol:</Text>
         <View style={styles.roleSelector}>
@@ -80,13 +118,15 @@ export default function SignupScreen() {
           </TouchableOpacity>
         </View>
         
-        {loading ? (
-          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginVertical: 20 }}/>
-        ) : (
-          <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+        {errors.general && <Text style={[styles.errorText, { textAlign: 'center', marginBottom: 10 }]}>{errors.general}</Text>}
+
+        <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleSignUp} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator size="small" color={COLORS.white} />
+          ) : (
             <Text style={styles.buttonText}>Registrarse</Text>
-          </TouchableOpacity>
-        )}
+          )}
+        </TouchableOpacity>
         
         <Link href="/(auth)" asChild>
           <TouchableOpacity style={styles.loginLink}>
@@ -108,11 +148,20 @@ const styles = StyleSheet.create({
     height: 50, 
     borderColor: COLORS.gray, 
     borderWidth: 1, 
-    marginBottom: 15, 
+    marginBottom: 5, 
     paddingHorizontal: 15, 
     borderRadius: 10, 
     backgroundColor: COLORS.white, 
     fontSize: scaleFont(16)
+  },
+  inputError: {
+    borderColor: 'red',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: scaleFont(12),
+    marginBottom: 10,
+    marginLeft: 4,
   },
   roleSelector: { flexDirection: 'row', marginBottom: 25, gap: 10 },
   roleButton: { 
@@ -133,6 +182,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginVertical: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: COLORS.gray,
   },
   buttonText: {
     color: COLORS.white,

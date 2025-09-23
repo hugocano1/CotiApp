@@ -89,7 +89,13 @@ export class ShoppingListService {
       .select<string, Offer>(
         `*,
         offer_items(*),
-        sellers:seller_id (store_id, stores (name, logo_url, rating) )`
+        seller_profiles:seller_id (
+          user_id,
+          nombre,
+          stores (
+            name
+          )
+        )`
       )
       .eq('shopping_list_id', listId)
       .order('price', { ascending: true });
@@ -130,6 +136,7 @@ export class ShoppingListService {
     total_price: number;
     notes?: string;
     items: OfferItem[];
+    shipping_cost: number; // ✅ AÑADIDO
   }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Usuario no autenticado.");
@@ -143,6 +150,7 @@ export class ShoppingListService {
         price: data.total_price,
         notes: data.notes,
         status: 'pending',
+        shipping_cost: data.shipping_cost, // ✅ AÑADIDO
       })
       .select('id')
       .single();
@@ -176,5 +184,18 @@ export class ShoppingListService {
     }
 
     return { success: true, offerId: offer_id };
+  }
+
+  static async deleteShoppingList(listId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Usuario no autenticado.");
+
+    const { error } = await supabase.rpc('delete_shopping_list', { p_list_id: listId });
+
+    if (error) {
+      console.error("Error deleting shopping list:", error);
+      throw new Error(error.message);
+    }
+    return { success: true };
   }
 }
