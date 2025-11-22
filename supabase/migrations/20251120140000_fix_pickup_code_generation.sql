@@ -48,7 +48,7 @@ BEGIN
   SELECT buyer_id, delivery_type INTO shopping_list_buyer_id, list_delivery_type FROM public.shopping_lists WHERE id = list_id_to_close;
 
   -- Generar código de recogida si es necesario
-  IF list_delivery_type = 'pickup' THEN
+  IF lower(trim(list_delivery_type)) = 'pickup' THEN
     v_pickup_code := UPPER(SUBSTRING(gen_random_uuid()::text, 1, 6));
   END IF;
 

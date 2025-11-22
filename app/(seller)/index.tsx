@@ -1,7 +1,7 @@
 // Ruta: app/(seller)/index.tsx
 import React, { useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
-import { Button, Icon } from '@rneui/themed';
+import { Icon } from '@rneui/themed';
 import { Link, useRouter, useNavigation } from 'expo-router';
 import { COLORS } from '../../src/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { useSellerOffers } from '../../src/hooks/useSellerOffers';
 import { useUserProfile } from '../../src/hooks/useUserProfile';
 import { OrderListItem } from '../../src/components/OrderListItem';
 import { OfferListItem } from '../../src/components/OfferListItem';
+import ForwardedButton from '../../src/components/ForwardedButton'; // IMPORTACIÓN CAMBIADA
 import { scaleFont } from '../../src/utils/responsive';
 
 const SectionHeader = ({ title, onPress }: { title: string, onPress: () => void }) => (
@@ -54,7 +55,7 @@ export default function SellerHomeScreen() {
                     <Text style={styles.subtitle}>Gestiona tus pedidos y aumenta tus ventas descubriendo clientes nuevos.</Text>
                     
                     <Link href="/(seller)/(listas)" asChild>
-                        <Button
+                        <ForwardedButton
                             title="Descubre listas de compra"
                             buttonStyle={styles.mainButton}
                             titleStyle={styles.mainButtonTitle}

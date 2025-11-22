@@ -78,9 +78,8 @@ export default function CreateOfferScreen() {
             try {
                 setLoading(true);
                 const listDetails = await ShoppingListService.getListDetails(listId);
-                if (listDetails && listDetails.items) {
-                    const itemsWithIds = listDetails.items.map((item: any, index: number) => ({ ...item, id: item.id || `item-${index}` }));
-                    setList({ ...listDetails, items: itemsWithIds });
+                if (listDetails) {
+                    setList(listDetails);
                 } else {
                     Alert.alert("Error", "No se pudieron cargar los artículos de la lista.");
                 }

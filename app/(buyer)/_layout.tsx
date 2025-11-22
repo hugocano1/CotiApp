@@ -107,6 +107,17 @@ export default function BuyerTabLayout() {
           },
         })}
       />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          // Oculta esta ruta de la barra de pestañas
+          href: null,
+          // La presenta como un modal
+          presentation: 'modal',
+          headerShown: true,
+          headerTitle: 'Notificaciones',
+        }}
+      />
       <Tabs.Screen 
         name="perfil" 
         options={{ 

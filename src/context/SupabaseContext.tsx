@@ -1,10 +1,17 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
 
-const SUPABASE_URL = 'https://besyjnekyhwawdmocehw.supabase.co'; // Reemplaza con tu URL
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc3lqbmVreWh3YXdkbW9jZWh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5MDA2NjMsImV4cCI6MjA1NzQ3NjY2M30.9CR_BuwcCKOy8YpRu8057Y90rPcynriqF9gqzbH9fAw'; // Reemplaza con tu clave pública
+// Obtener las variables de entorno desde la configuración extra de app.config.js
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl;
+const supabaseKey = Constants.expoConfig?.extra?.supabaseKey;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Validar que las variables de entorno estén presentes
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("Las variables de entorno de Supabase (supabaseUrl y supabaseKey) no están configuradas. Revisa tu archivo app.config.js y .env");
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 interface SupabaseContextType {
   supabase: SupabaseClient;

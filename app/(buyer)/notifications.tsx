@@ -1,39 +1,69 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useLayoutEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable } from 'react-native';
 import { COLORS } from '../../src/constants/colors';
 import { scaleFont } from '../../src/utils/responsive';
 import { useNotificationsList } from '../../src/hooks/useNotificationsList';
-import { Icon } from '@rneui/themed';
-import { useRouter } from 'expo-router';
+import { Icon, ListItem } from '@rneui/themed';
+import { useRouter, useNavigation } from 'expo-router';
 import { Notification } from '../../src/types/entities';
 
 export default function BuyerNotificationsScreen() {
   const { notifications, loading, error, markAsRead } = useNotificationsList();
   const router = useRouter();
+  const navigation = useNavigation();
+
+  // Hook para configurar opciones de la pantalla modal
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <Pressable onPress={() => router.back()} style={{ marginLeft: 15 }}>
+          <Icon name="close" type="material-community" color={COLORS.gray} />
+        </Pressable>
+      ),
+    });
+  }, [navigation, router]);
 
   const handleNotificationPress = (notification: Notification) => {
     if (!notification.is_read) {
       markAsRead(notification.id);
     }
+    // Navega a la pantalla de detalle del pedido si existe el orderId
     if (notification.data?.orderId) {
-      router.push(`/(buyer)/mis-pedidos/pedido-detalle/${notification.data.orderId}`);
+      // Cierra el modal antes de navegar
+      router.back(); 
+      // Pequeño delay para asegurar que el modal se cierre antes de la navegación
+      setTimeout(() => {
+        router.push(`/(buyer)/(mis-pedidos)/order-details/${notification.data.orderId}`);
+      }, 100);
     }
   };
 
   const renderNotificationItem = ({ item }: { item: Notification }) => (
-    <TouchableOpacity
-      style={[styles.notificationItem, item.is_read ? styles.read : styles.unread]}
+    <ListItem
+      bottomDivider
       onPress={() => handleNotificationPress(item)}
+      containerStyle={!item.is_read ? styles.unreadItem : styles.readItem}
     >
-      <View style={styles.notificationContent}>
-        <Text style={styles.notificationTitle}>{item.title}</Text>
-        <Text style={styles.notificationBody}>{item.body}</Text>
-        <Text style={styles.notificationTime}>{new Date(item.created_at).toLocaleString()}</Text>
-      </View>
-      {!item.is_read && (
-        <Icon name="circle" type="font-awesome" color={COLORS.primary} size={10} containerStyle={styles.unreadIndicator} />
-      )}
-    </TouchableOpacity>
+      <Icon 
+        name={item.data?.orderId ? 'receipt-text-check-outline' : 'bell-outline'} 
+        type="material-community" 
+        color={!item.is_read ? COLORS.primary : COLORS.gray}
+        size={28}
+      />
+      <ListItem.Content>
+        <ListItem.Title style={styles.notificationTitle} numberOfLines={1}>
+          {item.title}
+        </ListItem.Title>
+        <ListItem.Subtitle style={styles.notificationBody} numberOfLines={2}>
+          {item.body}
+        </ListItem.Subtitle>
+        <Text style={styles.notificationTime}>
+          {new Date(item.created_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+        </Text>
+      </ListItem.Content>
+      {!item.is_read && <View style={styles.unreadDot} />}
+      {item.data?.orderId && <ListItem.Chevron />}
+    </ListItem>
   );
 
   if (loading) {
@@ -47,22 +77,23 @@ export default function BuyerNotificationsScreen() {
   if (error) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Error al cargar notificaciones: {error}</Text>
+        <Text style={styles.errorText}>Error al cargar notificaciones.</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mis Notificaciones</Text>
       {notifications.length === 0 ? (
-        <Text style={styles.emptyText}>No tienes notificaciones.</Text>
+        <View style={styles.centered}>
+            <Icon name="bell-off-outline" type="material-community" color={COLORS.lightGray} size={60} />
+            <Text style={styles.emptyText}>No tienes notificaciones.</Text>
+        </View>
       ) : (
         <FlatList
           data={notifications}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderNotificationItem}
-          contentContainerStyle={styles.listContent}
         />
       )}
     </View>
@@ -72,20 +103,13 @@ export default function BuyerNotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    paddingTop: 20,
+    backgroundColor: '#F8F9FA', // Un fondo ligeramente gris
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  title: {
-    fontSize: scaleFont(24),
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    textAlign: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 20,
   },
   emptyText: {
     textAlign: 'center',
@@ -96,53 +120,35 @@ const styles = StyleSheet.create({
   errorText: {
     textAlign: 'center',
     color: COLORS.danger,
-    marginTop: 20,
     fontSize: scaleFont(16),
   },
-  listContent: {
-    paddingHorizontal: 10,
-    paddingBottom: 20,
-  },
-  notificationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  unreadItem: {
     backgroundColor: COLORS.white,
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    marginHorizontal: 5,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
   },
-  read: {
-    opacity: 0.7,
-  },
-  unread: {
-    // No specific style, default is full opacity
-  },
-  notificationContent: {
-    flex: 1,
+  readItem: {
+    backgroundColor: '#F8F9FA', // Mismo color que el fondo para que se integre
   },
   notificationTitle: {
-    fontSize: scaleFont(16),
     fontWeight: 'bold',
+    fontSize: scaleFont(15),
     color: COLORS.text,
-    marginBottom: 5,
   },
   notificationBody: {
-    fontSize: scaleFont(14),
+    fontSize: scaleFont(13),
     color: COLORS.gray,
-    marginBottom: 5,
+    paddingTop: 4,
   },
   notificationTime: {
-    fontSize: scaleFont(12),
+    fontSize: scaleFont(11),
     color: COLORS.lightGray,
-    textAlign: 'right',
+    marginTop: 8,
   },
-  unreadIndicator: {
-    marginLeft: 10,
+  unreadDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.secondary,
+    alignSelf: 'center',
+    marginRight: 10,
   },
 });

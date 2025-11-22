@@ -11,7 +11,9 @@ export class ShoppingListService {
     delivery_date?: Date;
     min_budget?: number; 
     max_budget?: number; 
-    delivery_address_text?: string; // AÑADIDO
+    delivery_address_text?: string;
+    latitude?: number;
+    longitude?: number;
   }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Usuario no autenticado.");
@@ -33,7 +35,9 @@ export class ShoppingListService {
       delivery_date: listData.delivery_date?.toISOString(),
       min_budget: listData.min_budget, 
       max_budget: listData.max_budget, 
-      delivery_address_text: listData.delivery_address_text, // AÑADIDO
+      delivery_address_text: listData.delivery_address_text,
+      latitude: listData.latitude,
+      longitude: listData.longitude,
     });
 
     if (error) {

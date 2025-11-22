@@ -1,12 +1,17 @@
 // Ruta: app/(buyer)/crear-lista.tsx
-import React, { useState, useLayoutEffect, useCallback } from 'react';
+import React, { useState, useLayoutEffect, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ScrollView, Platform, Image } from 'react-native';
 import { useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import { Input, Button, Icon, BottomSheet, ListItem, ButtonGroup } from '@rneui/themed';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
+
 import { COLORS } from '../../src/constants/colors';
 import { ShoppingListService } from '../../src/services/shoppingList.service';
 import { scaleFont } from '../../src/utils/responsive';
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
 
 type Item = { id: string; name: string; quantity: number; unit: string; brand?: string; notes?: string; };
 type DeliveryType = 'delivery' | 'pickup';
@@ -22,7 +27,10 @@ export default function CreateListScreen() {
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(new Date());
   const [deliveryTypeIndex, setDeliveryTypeIndex] = useState(0);
   const [items, setItems] = useState<Item[]>([]);
-  const [deliveryAddressText, setDeliveryAddressText] = useState('');
+  
+  // Location state
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [locationErrorMsg, setLocationErrorMsg] = useState<string | null>(null);
   
   const [newItemName, setNewItemName] = useState('');
   const [newItemQty, setNewItemQty] = useState(1);
@@ -34,6 +42,19 @@ export default function CreateListScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationErrorMsg('El permiso para acceder a la ubicación fue denegado. Por favor, actívalo desde la configuración de tu dispositivo si deseas despacho a domicilio.');
+        return;
+      }
+
+      let currentLocation = await Location.getCurrentPositionAsync({});
+      setLocation(currentLocation);
+    })();
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       setListTitle('');
@@ -42,7 +63,6 @@ export default function CreateListScreen() {
       setDeliveryDate(new Date());
       setDeliveryTypeIndex(0);
       setItems([]);
-      setDeliveryAddressText('');
       setNewItemName('');
       setNewItemQty(1);
       setNewItemUnit('ud');
@@ -60,16 +80,16 @@ export default function CreateListScreen() {
 
   const handleAddItem = () => {
     if (!newItemName.trim()) { Alert.alert('Error', 'Por favor, ingresa el nombre del producto.'); return; }
-    setItems([...items, { id: Date.now().toString(), name: newItemName.trim(), quantity: newItemQty, unit: newItemUnit, brand: newItemBrand.trim(), notes: newItemNotes.trim() }]);
+    setItems([...items, { id: uuidv4(), name: newItemName.trim(), quantity: newItemQty, unit: newItemUnit, brand: newItemBrand.trim(), notes: newItemNotes.trim() }]);
     setNewItemName(''); setNewItemQty(1); setNewItemUnit('ud'); setNewItemBrand(''); setNewItemNotes('');
   };
 
-  const handleRemoveItem = (index: number) => { setItems(items.filter((_, i) => i !== index)); };
+  const handleRemoveItem = (id: string) => { setItems(items.filter(item => item.id !== id)); };
 
   const handleSaveList = async () => {
     if (!listTitle.trim()) { Alert.alert('Error', 'Por favor, dale un nombre a tu lista.'); return; }
     if (items.length === 0) { Alert.alert('Error', 'Añade al menos un artículo a tu lista.'); return; }
-    if (deliveryTypeIndex === 0 && !deliveryAddressText.trim()) { Alert.alert('Error', 'Por favor, ingresa la dirección de despacho.'); return; }
+    if (deliveryTypeIndex === 0 && !location) { Alert.alert('Error', 'No hemos podido obtener tu ubicación para el despacho. Asegúrate de tener los permisos activados.'); return; }
 
     setLoading(true);
     try {
@@ -81,7 +101,8 @@ export default function CreateListScreen() {
         delivery_type: deliveryType,
         min_budget: parseFloat(minBudget) || undefined,
         max_budget: parseFloat(maxBudget) || undefined,
-        delivery_address_text: deliveryAddressText,
+        latitude: deliveryType === 'delivery' ? location?.coords.latitude : undefined,
+        longitude: deliveryType === 'delivery' ? location?.coords.longitude : undefined,
       });
       Alert.alert('¡Éxito!', 'Tu lista de compras ha sido creada y publicada.');
       router.back();
@@ -154,15 +175,31 @@ export default function CreateListScreen() {
             />
             
             {deliveryTypeIndex === 0 && (
-                <Input
-                    placeholder="Dirección de Despacho"
-                    value={deliveryAddressText}
-                    onChangeText={setDeliveryAddressText}
-                    containerStyle={styles.inputOuterContainer}
-                    inputContainerStyle={styles.inputContainer}
-                    inputStyle={styles.inputText}
-                    leftIcon={<Icon name="map-marker" type="material-community" color={COLORS.gray}/>}
-                />
+                <View>
+                  <Text style={styles.label}>Ubicación para el Despacho</Text>
+                  {locationErrorMsg && <Text style={styles.errorText}>{locationErrorMsg}</Text>}
+                  <View style={styles.mapContainer}>
+                    {location ? (
+                      <MapView
+                        style={styles.map}
+                        initialRegion={{
+                          latitude: location.coords.latitude,
+                          longitude: location.coords.longitude,
+                          latitudeDelta: 0.01,
+                          longitudeDelta: 0.01,
+                        }}
+                      >
+                        <Marker
+                          coordinate={{ latitude: location.coords.latitude, longitude: location.coords.longitude }}
+                          title="Tu ubicación"
+                          description="Aquí se entregará tu pedido"
+                        />
+                      </MapView>
+                    ) : (
+                      <Text style={styles.loadingText}>Obteniendo tu ubicación...</Text>
+                    )}
+                  </View>
+                </View>
             )}
 
             <View style={styles.addItemContainer}>
@@ -187,13 +224,13 @@ export default function CreateListScreen() {
 
             {items.length > 0 && <Text style={styles.sectionTitle}>Artículos en tu lista ({items.length})</Text>}
             {items.map((item, index) => (
-                <View key={index} style={styles.itemRow}>
+                <View key={item.id} style={styles.itemRow}>
                     <View style={{flex: 1}}>
                       <Text style={styles.itemTextMain}>{item.quantity} {item.unit} - {item.name}</Text>
                       {!!item.brand && <Text style={styles.itemTextSub}>Marca: {item.brand}</Text>}
                       {!!item.notes && <Text style={styles.itemTextSub}>Notas: {item.notes}</Text>}
                     </View>
-                    <TouchableOpacity onPress={() => handleRemoveItem(index)}><Icon name="close-circle-outline" type="material-community" color={COLORS.danger} /></TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleRemoveItem(item.id)}><Icon name="close-circle-outline" type="material-community" color={COLORS.danger} /></TouchableOpacity>
                 </View>
             ))}
             
@@ -233,6 +270,22 @@ const styles = StyleSheet.create({
     dateButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white, borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 14, marginBottom: 15 },
     dateButtonText: { marginLeft: 10, fontSize: scaleFont(14), color: COLORS.text },
     buttonGroupContainer: { height: 45, marginHorizontal: 0, marginBottom: 20, borderRadius: 12 },
+    mapContainer: {
+      height: 200,
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 20,
+      backgroundColor: '#f0f0f0',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#ddd'
+    },
+    map: {
+      ...StyleSheet.absoluteFillObject,
+    },
+    loadingText: { color: COLORS.gray, fontStyle: 'italic' },
+    errorText: { color: COLORS.danger, marginBottom: 10, textAlign: 'center' },
     addItemContainer: { backgroundColor: COLORS.white, padding: 15, borderRadius: 12, marginVertical: 20, elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5 },
     quantityContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
     quantityLabel: { fontSize: scaleFont(14), color: COLORS.text, marginRight: 'auto' },

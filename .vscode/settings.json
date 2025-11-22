@@ -4,5 +4,6 @@
   "deno.unstable": [],
   "deno.enablePaths": [
     "supabase/functions"
-  ]
+  ],
+  "geminicodeassist.agentYoloMode": true
 }

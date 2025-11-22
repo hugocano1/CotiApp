@@ -37,6 +37,17 @@ export default function SellerTabLayout() {
       <Tabs.Screen name="(listas)" options={{ title: 'Listas', tabBarIcon: ({ color, focused }) => ( <Icon name="view-list" type="material-community" color={focused ? COLORS.white : color} /> ), tabBarButton: (props) => ( <TouchableOpacity {...props} style={styles.mainButtonTab} /> ), tabBarLabelStyle: { color: COLORS.white, fontWeight: 'bold' }, }} />
       <Tabs.Screen name="(offers)" options={{ title: 'Mis Ofertas', tabBarIcon: ({ color }) => <Icon name="tag" type="material-community" color={color} /> }} />
       <Tabs.Screen name="(pedidos)" options={{ title: 'Mis Pedidos', tabBarIcon: ({ color }) => <Icon name="receipt" type="material-community" color={color} /> }} />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          href: null,
+          presentation: 'modal',
+          headerShown: true,
+          headerTitle: 'Notificaciones',
+          headerStyle: { backgroundColor: COLORS.primary },
+          headerTintColor: COLORS.white,
+        }}
+      />
       <Tabs.Screen name="perfil" options={{ title: 'Perfil', headerShown: true, headerStyle: { backgroundColor: COLORS.primary }, headerTintColor: COLORS.white, tabBarIcon: ({ color }) => <Icon name="account" type="material-community" color={color} /> }} />
     </Tabs>
   );

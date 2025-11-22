@@ -17,7 +17,10 @@ export default {
     backgroundColor: "#ffffff"
   },
   ios: {
-    supportsTablet: true
+    supportsTablet: true,
+    config: {
+      googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
+    }
   },
   android: {
     adaptiveIcon: {
@@ -27,7 +30,12 @@ export default {
     // ✅ CORRECCIÓN FINAL Y DEFINITIVA DEL PAQUETE
     package: "com.hugocano.cotiap", 
     // ➕ FUSIONADO de app.json
-    googleServicesFile: "./google-services.json" 
+    googleServicesFile: "./google-services.json",
+    config: {
+      googleMaps: {
+        apiKey: process.env.GOOGLE_MAPS_API_KEY
+      }
+    }
   },
   web: {
     bundler: "metro",
