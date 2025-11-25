@@ -54,7 +54,7 @@ export class ShoppingListService {
   }
 
   static async getListDetails(listId: string) {
-    const { data, error } = await supabase.from('shopping_lists').select('*, buyer:buyer_id(nombre, apellido)').eq('id', listId).single();
+    const { data, error } = await supabase.from('shopping_lists').select('*, buyer_profiles(nombre, apellido)').eq('id', listId).single();
     if (error) { console.error("Error fetching list details:", error); throw new Error(error.message); }
     return data;
   }

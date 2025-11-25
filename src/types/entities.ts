@@ -84,21 +84,41 @@ export interface Offer {
 }
 
 /**
+
  * Represents a shopping list created by a buyer.
+
  */
+
 export interface ShoppingList {
+
   id: string;
+
   title: string;
+
   status: 'active' | 'pending' | 'completed' | 'closed';
+
   created_at: string; // ISO date string
+
   delivery_date?: string; // ISO date string
+
   min_budget?: number;
+
   max_budget?: number;
+
   delivery_type?: 'pickup' | 'delivery';
+
+  latitude?: number;
+
+  longitude?: number;
+
   items: ShoppingListItem[];
+
   buyer_profiles?: BuyerProfile;
+
   buyer_id: string;
+
   offers?: Partial<Offer>[]; // Related offers, often partials
+
 }
 
 /**

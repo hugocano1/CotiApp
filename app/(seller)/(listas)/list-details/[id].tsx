@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { useLocalSearchParams, Link } from 'expo-router';
 import { Card, Button, Icon } from '@rneui/themed';
+import MapView, { Marker } from 'react-native-maps';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
 import { COLORS } from '../../../../src/constants/colors';
 import { scaleFont } from '../../../../src/utils/responsive';
@@ -36,6 +37,8 @@ export default function SellerListDetailsScreen() {
     ? new Date(listDetails.delivery_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) 
     : 'No especificada';
 
+  const showMap = listDetails?.delivery_type === 'delivery' && listDetails.latitude && listDetails.longitude;
+
   if (loading) {
     return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
   }
@@ -58,6 +61,29 @@ export default function SellerListDetailsScreen() {
                 <InfoRow icon="cash" text="Presupuesto:" value={`$${listDetails.min_budget || 'N/A'} - $${listDetails.max_budget || 'N/A'}`} />
                 <InfoRow icon="truck-delivery-outline" text="Entrega:" value={translateDeliveryType(listDetails.delivery_type)} />
             </Card>
+
+            {showMap && (
+              <Card containerStyle={styles.card}>
+                <Card.Title style={styles.cardTitle}>Ubicación de Entrega</Card.Title>
+                <Card.Divider/>
+                <View style={styles.mapContainer}>
+                  <MapView
+                    style={styles.map}
+                    initialRegion={{
+                      latitude: listDetails.latitude!,
+                      longitude: listDetails.longitude!,
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    }}
+                  >
+                    <Marker
+                      coordinate={{ latitude: listDetails.latitude!, longitude: listDetails.longitude! }}
+                      title="Ubicación de entrega"
+                    />
+                  </MapView>
+                </View>
+              </Card>
+            )}
             
             <Text style={styles.sectionHeader}>Artículos Solicitados</Text>
             {(listDetails.items || []).map((item: ShoppingListItem, index: number) => (
@@ -129,6 +155,20 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
   infoTextLabel: { marginLeft: 10, fontSize: scaleFont(14), color: COLORS.gray },
   infoTextValue: { marginLeft: 5, fontSize: scaleFont(14), color: COLORS.text, fontWeight: '500' },
+  mapContainer: {
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 10,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd'
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
   itemCard: { borderRadius: 10, marginHorizontal: 30, marginBottom: 4, padding: 12 },
   itemCardRow: { flexDirection: 'row', alignItems: 'center' },
   itemDetailsColumn: { flex: 1, paddingRight: 10 },
