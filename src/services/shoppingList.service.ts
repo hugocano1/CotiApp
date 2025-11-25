@@ -167,15 +167,27 @@ export class ShoppingListService {
     const offer_id = offerData.id;
 
     // 2. Prepare the offer items with the new offer_id and the original list_item_id
-    const offerItems = data.items.map(item => ({
-      offer_id: offer_id,
-      list_item_id: item.id,
-      item_name: item.item_name,
-      quantity: item.quantity,
-      unit: item.unit,
-      brand: item.brand,
-      unit_price: item.unit_price,
-    }));
+    // WORKAROUND: Se extrae el list_item_id que viene adjunto al final del item_name como solución a un bug
+    // de una propiedad que desaparece durante el envío desde el cliente. Esto revierte el hack del frontend.
+    const offerItems = data.items.map(item => {
+      const parts = item.item_name.split('__ID__');
+      if (parts.length !== 2) {
+        // Si el separador no está, algo salió muy mal.
+        throw new Error(`ID del artículo de la lista no encontrado en el nombre: "${item.item_name}"`);
+      }
+      const realName = parts[0];
+      const listItemId = parts[1];
+
+      return {
+        offer_id: offer_id,
+        list_item_id: listItemId,
+        item_name: realName,
+        quantity: item.quantity,
+        unit: item.unit,
+        brand: item.brand,
+        unit_price: item.unit_price,
+      };
+    });
 
     // 3. Insert the detailed items
     const { error: itemsError } = await supabase.from('offer_items').insert(offerItems);

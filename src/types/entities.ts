@@ -58,7 +58,8 @@ export interface ShoppingListItem {
  * Represents a single item within a seller's offer.
  */
 export interface OfferItem {
-  id: string;
+  id?: string; // ID del offer_item, generado por la BD
+  list_item_id?: string; // FK al shopping_list_item original
   item_name: string;
   unit_price: number;
   quantity: number;

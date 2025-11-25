@@ -119,8 +119,9 @@ export default function CreateOfferScreen() {
         if (!list) return;
 
         const itemsWithPrices: OfferItem[] = list.items.map(item => ({
-            id: item.id,
-            item_name: item.name,
+            // WORKAROUND: Debido a un bug que elimina la propiedad 'list_item_id' durante el envío, se adjunta el ID al final del nombre.
+            // El código ideal y limpio sería: { list_item_id: item.id, item_name: item.name, ... }
+            item_name: `${item.name}__ID__${item.id}`,
             quantity: item.quantity,
             unit: item.unit,
             brand: item.brand,
@@ -145,7 +146,7 @@ export default function CreateOfferScreen() {
             Alert.alert("¡Éxito!", "Tu oferta ha sido enviada correctamente.");
             router.back();
         } catch (error: any) {
-            Alert.alert("Error al Enviar", `No se pudo enviar la oferta: ${error.message}`);
+            Alert.alert("Error al Enviar (v2)", `No se pudo enviar la oferta: ${error.message}`);
         } finally {
             setSubmitting(false);
         }
