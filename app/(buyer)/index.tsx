@@ -48,7 +48,7 @@ export default function BuyerHomeScreen() {
 
         <View style={styles.contentContainer}>
           <Text style={styles.panelTitle}>Panel de comprador</Text>
-          <Text style={styles.subtitle}>Crea tu lista de compras y empieza a recibir las mejores ofertas.</Text>
+          <Text style={styles.subtitle}>Crea tu lista de compras y recibe las mejores ofertas.</Text>
           
           <Button
             title="Crear nueva lista"

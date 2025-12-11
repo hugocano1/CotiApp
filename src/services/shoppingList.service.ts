@@ -19,6 +19,7 @@ export class ShoppingListService {
     if (!user) throw new Error("Usuario no autenticado.");
 
     const itemsForDb = listData.items.map(item => ({
+      id: item.id,
       name: item.name,
       quantity: item.quantity,
       unit: item.unit,
@@ -137,10 +138,12 @@ export class ShoppingListService {
 
   static async createDetailedOffer(data: {
     shopping_list_id: string;
+    buyer_id: string;
+    list_title: string;
     total_price: number;
     notes?: string;
     items: OfferItem[];
-    shipping_cost: number; // ✅ AÑADIDO
+    shipping_cost: number;
   }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Usuario no autenticado.");
@@ -154,7 +157,7 @@ export class ShoppingListService {
         price: data.total_price,
         notes: data.notes,
         status: 'pending',
-        shipping_cost: data.shipping_cost, // ✅ AÑADIDO
+        shipping_cost: data.shipping_cost,
       })
       .select('id')
       .single();
@@ -166,13 +169,10 @@ export class ShoppingListService {
 
     const offer_id = offerData.id;
 
-    // 2. Prepare the offer items with the new offer_id and the original list_item_id
-    // WORKAROUND: Se extrae el list_item_id que viene adjunto al final del item_name como solución a un bug
-    // de una propiedad que desaparece durante el envío desde el cliente. Esto revierte el hack del frontend.
+    // 2. Prepare the offer items
     const offerItems = data.items.map(item => {
       const parts = item.item_name.split('__ID__');
       if (parts.length !== 2) {
-        // Si el separador no está, algo salió muy mal.
         throw new Error(`ID del artículo de la lista no encontrado en el nombre: "${item.item_name}"`);
       }
       const realName = parts[0];
@@ -194,9 +194,23 @@ export class ShoppingListService {
 
     if (itemsError) {
       console.error('Error creating offer items:', itemsError);
-      // If items fail, roll back the main offer to avoid incomplete data
       await supabase.from('offers').delete().eq('id', offer_id);
       throw new Error(itemsError.message);
+    }
+
+    // 4. Create a notification for the buyer
+    const { error: notificationError } = await supabase.from('notifications').insert({
+      user_id: data.buyer_id,
+      title: '¡Nueva oferta recibida!',
+      body: `Has recibido una nueva oferta para tu lista "${data.list_title}"`,
+      type: 'new_offer',
+      reference_id: offer_id,
+    });
+
+    if (notificationError) {
+      // Log the error, but don't throw, as the offer was successfully created.
+      // The user can still see the offer in the app.
+      console.error('Error creating notification:', notificationError.message);
     }
 
     return { success: true, offerId: offer_id };

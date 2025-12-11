@@ -43,7 +43,7 @@ const OfferAccordionCard = ({ offer, isExpanded, onToggle, onAccept }: { offer: 
       <Card.Divider style={{marginTop: 10}}/>
       {offer.notes && <Text style={styles.notes}>Notas del vendedor: {offer.notes}</Text>}
       <Button
-        title="Aceptar esta Oferta"
+        title="Aceptar esta oferta"
         onPress={() => onAccept(offer.id)}
         buttonStyle={styles.acceptButton}
         titleStyle={styles.acceptButtonTitle}
@@ -170,7 +170,7 @@ export default function BuyerListDetailsScreen() {
       <Text style={styles.header}>{listDetails.title || 'Detalles de la Lista'}</Text>
       
       <Card containerStyle={styles.card}>
-        <Card.Title style={styles.cardTitle}>Resumen de tu Lista</Card.Title>
+        <Card.Title style={styles.cardTitle}>Resumen de tu lista</Card.Title>
         <Card.Divider/>
         <InfoRow icon="information-outline" text="Estado" value={listDetails.status} />
         <InfoRow icon="cash" text="Presupuesto" value={`${formatCurrency(listDetails.min_budget)} - ${formatCurrency(listDetails.max_budget)}`} />
@@ -178,7 +178,7 @@ export default function BuyerListDetailsScreen() {
       </Card>
 
       <Card containerStyle={styles.card}>
-        <Card.Title style={styles.cardTitle}>Artículos que Solicitaste</Card.Title>
+        <Card.Title style={styles.cardTitle}>Artículos que solicitaste</Card.Title>
         <Card.Divider/>
         {(listDetails.items || []).map((item: ShoppingListItem, index: number) => (
           <View key={index} style={styles.itemContainer}>
@@ -193,7 +193,7 @@ export default function BuyerListDetailsScreen() {
       </Card>
       
       <View style={styles.offersSection}>
-        <Text style={styles.offersHeader}>Ofertas Recibidas</Text>
+        <Text style={styles.offersHeader}>Ofertas recibidas</Text>
         {offers.length > 0 ? (
           offers.map(offer => (
             <OfferAccordionCard

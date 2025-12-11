@@ -120,9 +120,9 @@ export default function CreateListScreen() {
         </View>
 
         <View style={styles.formContainer}>
-            <Text style={styles.sectionTitle}>Datos de tu Lista</Text>
+            <Text style={styles.sectionTitle}>Crea tu Lista</Text>
             <Input
-                placeholder="Ej: Compras del mes"
+                placeholder="Ej: coloca un nombre a tu lista"
                 value={listTitle}
                 onChangeText={setListTitle}
                 containerStyle={styles.inputOuterContainer}
@@ -166,7 +166,7 @@ export default function CreateListScreen() {
             )}
             
             <ButtonGroup
-                buttons={['Enviar a Domicilio', 'Recoger en Tienda']}
+                buttons={['Enviar a domicilio', 'Recoger en tienda']}
                 selectedIndex={deliveryTypeIndex}
                 onPress={(value) => setDeliveryTypeIndex(value)}
                 containerStyle={styles.buttonGroupContainer}
@@ -176,7 +176,7 @@ export default function CreateListScreen() {
             
             {deliveryTypeIndex === 0 && (
                 <View>
-                  <Text style={styles.label}>Ubicación para el Despacho</Text>
+                  <Text style={styles.label}>Ubicación para el despacho</Text>
                   {locationErrorMsg && <Text style={styles.errorText}>{locationErrorMsg}</Text>}
                   <View style={styles.mapContainer}>
                     {location ? (
@@ -203,10 +203,10 @@ export default function CreateListScreen() {
             )}
 
             <View style={styles.addItemContainer}>
-                <Text style={styles.subHeader}>Añadir Artículo</Text>
+                <Text style={styles.subHeader}>Producto</Text>
                 <Input placeholder="Nombre del producto" value={newItemName} onChangeText={setNewItemName} inputContainerStyle={styles.inputContainer} inputStyle={styles.inputText} />
                 <Input placeholder="Marca (Opcional)" value={newItemBrand} onChangeText={setNewItemBrand} inputContainerStyle={styles.inputContainer} inputStyle={styles.inputText} />
-                <Input placeholder="Notas sobre el producto (Opcional)" value={newItemNotes} onChangeText={setNewItemNotes} inputContainerStyle={styles.inputContainer} inputStyle={styles.inputText} />
+                <Input placeholder="Más detalles sobre el producto (Opcional)" value={newItemNotes} onChangeText={setNewItemNotes} inputContainerStyle={styles.inputContainer} inputStyle={styles.inputText} />
 
                 <View style={styles.quantityContainer}>
                     <Text style={styles.quantityLabel}>Cantidad:</Text>
@@ -219,7 +219,7 @@ export default function CreateListScreen() {
                         <Text style={styles.unitText}>{newItemUnit}</Text><Icon name="chevron-down" type="material-community" color={COLORS.gray} />
                     </TouchableOpacity>
                 </View>
-                <Button title="+ Añadir a la lista" onPress={handleAddItem} buttonStyle={{backgroundColor: COLORS.secondary, borderRadius: 8}} />
+                <Button title="+ Añadir otro producto" onPress={handleAddItem} buttonStyle={{backgroundColor: COLORS.secondary, borderRadius: 8}} />
             </View>
 
             {items.length > 0 && <Text style={styles.sectionTitle}>Artículos en tu lista ({items.length})</Text>}

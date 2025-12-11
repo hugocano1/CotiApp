@@ -55,7 +55,7 @@ export default function SellerListDetailsScreen() {
             </View>
             
             <Card containerStyle={styles.card}>
-                <Card.Title style={styles.cardTitle}>Información General</Card.Title>
+                <Card.Title style={styles.cardTitle}>Información general</Card.Title>
                 <Card.Divider/>
                 <InfoRow icon="calendar-outline" text="Fecha Despacho:" value={dispatchDate} />
                 <InfoRow icon="cash" text="Presupuesto:" value={`$${listDetails.min_budget || 'N/A'} - $${listDetails.max_budget || 'N/A'}`} />
@@ -64,7 +64,7 @@ export default function SellerListDetailsScreen() {
 
             {showMap && (
               <Card containerStyle={styles.card}>
-                <Card.Title style={styles.cardTitle}>Ubicación de Entrega</Card.Title>
+                <Card.Title style={styles.cardTitle}>Ubicación de entrega</Card.Title>
                 <Card.Divider/>
                 <View style={styles.mapContainer}>
                   <MapView
@@ -122,7 +122,7 @@ export default function SellerListDetailsScreen() {
                     asChild
                 >
                     <Button 
-                        title="Hacer una Oferta" 
+                        title="Hacer una oferta" 
                         buttonStyle={styles.actionButton}
                         icon={<Icon name="tag-plus-outline" type="material-community" color="white" containerStyle={{marginRight: 10}} />}
                     />
