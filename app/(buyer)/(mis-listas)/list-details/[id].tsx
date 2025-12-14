@@ -1,6 +1,5 @@
-// app/(buyer)/(mis-listas)/list-details/[id].tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, LayoutAnimation, UIManager, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, LayoutAnimation, UIManager, Platform, Alert, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Card, Button, Icon } from '@rneui/themed';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
@@ -182,12 +181,17 @@ export default function BuyerListDetailsScreen() {
         <Card.Divider/>
         {(listDetails.items || []).map((item: ShoppingListItem, index: number) => (
           <View key={index} style={styles.itemContainer}>
-            <Text style={styles.itemName}>{item.name}</Text>
-            <View style={styles.itemDetailsRow}>
-                <Text style={styles.itemDetailText}>Cantidad: {item.quantity} {item.unit || ''}</Text>
-                {item.brand && <Text style={styles.itemDetailText}>· Marca: {item.brand}</Text>}
+            {item.image_url && (
+              <Image source={{ uri: item.image_url }} style={styles.itemImage} />
+            )}
+            <View style={styles.itemTextContainer}>
+              <Text style={styles.itemName}>{item.name}</Text>
+              <View style={styles.itemDetailsRow}>
+                  <Text style={styles.itemDetailText}>Cantidad: {item.quantity} {item.unit || ''}</Text>
+                  {item.brand && <Text style={styles.itemDetailText}>· Marca: {item.brand}</Text>}
+              </View>
+              {item.notes && <Text style={styles.itemNotes}>Notas: {item.notes}</Text>}
             </View>
-            {item.notes && <Text style={styles.itemNotes}>Notas: {item.notes}</Text>}
           </View>
         ))}
       </Card>
@@ -230,7 +234,10 @@ const styles = StyleSheet.create({
     infoRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
     infoTextLabel: { marginLeft: 10, fontSize: scaleFont(14), color: COLORS.gray },
     infoTextValue: { marginLeft: 5, fontSize: scaleFont(14), color: COLORS.text, fontWeight: '500' },
-    itemContainer: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+    
+    itemContainer: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+    itemImage: { width: 50, height: 50, borderRadius: 8, marginRight: 15, backgroundColor: '#e9e9e9' },
+    itemTextContainer: { flex: 1 },
     itemName: { fontSize: scaleFont(15), fontWeight: '500', color: COLORS.text, marginBottom: 4 },
     itemDetailsRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
     itemDetailText: { fontSize: scaleFont(13), color: COLORS.gray, marginRight: 10 },

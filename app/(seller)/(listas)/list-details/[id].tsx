@@ -1,6 +1,6 @@
 // Ruta: app/(seller)/(listas)/list-details/[id].tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Image } from 'react-native';
 import { useLocalSearchParams, Link } from 'expo-router';
 import { Card, Button, Icon } from '@rneui/themed';
 import MapView, { Marker } from 'react-native-maps';
@@ -89,6 +89,9 @@ export default function SellerListDetailsScreen() {
             {(listDetails.items || []).map((item: ShoppingListItem, index: number) => (
                 <Card key={index} containerStyle={styles.itemCard}>
                     <View style={styles.itemCardRow}>
+                        {item.image_url && (
+                            <Image source={{ uri: item.image_url }} style={styles.itemImage} />
+                        )}
                         <View style={styles.itemDetailsColumn}>
                             <Text style={styles.itemName}>{item.name}</Text>
                             {item.brand && 
@@ -169,10 +172,11 @@ const styles = StyleSheet.create({
   map: {
     ...StyleSheet.absoluteFillObject,
   },
-  itemCard: { borderRadius: 10, marginHorizontal: 30, marginBottom: 4, padding: 12 },
+  itemCard: { borderRadius: 10, marginHorizontal: 15, marginBottom: 10, padding: 12 },
   itemCardRow: { flexDirection: 'row', alignItems: 'center' },
+  itemImage: { width: 45, height: 45, borderRadius: 8, marginRight: 12, backgroundColor: '#e9e9e9' },
   itemDetailsColumn: { flex: 1, paddingRight: 10 },
-  itemQuantityColumn: { alignItems: 'center', justifyContent: 'center', paddingLeft: 10, borderLeftWidth: 1, borderLeftColor: COLORS.gray },
+  itemQuantityColumn: { alignItems: 'center', justifyContent: 'center', paddingLeft: 10, borderLeftWidth: 1, borderLeftColor: '#eee' },
   itemName: { fontSize: scaleFont(15), fontWeight: '600', color: COLORS.text, marginBottom: 6 },
   metaItem: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   itemMetaText: { fontSize: scaleFont(12), color: COLORS.gray, marginLeft: 5 },

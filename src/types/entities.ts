@@ -52,6 +52,7 @@ export interface ShoppingListItem {
   unit?: string;
   brand?: string;
   notes?: string;
+  image_url?: string;
 }
 
 /**
@@ -131,6 +132,7 @@ export interface Order {
   status: 'confirmed' | 'enviado' | 'completed';
   created_at: string; // ISO date string
   pickup_code?: string; // ✅ AÑADIDO
+  items: OfferItem[]; // Los artículos de la oferta que se convirtió en pedido
   shopping_list_id: string;
   shopping_lists?: ShoppingList; // The original shopping list
   seller_id: string;
@@ -151,4 +153,6 @@ export interface Notification {
   data?: { [key: string]: any }; // Para datos adicionales como orderId
   is_read: boolean;
   created_at: string; // ISO date string
+  type?: string; // e.g., 'new_offer', 'order_update'
+  reference_id?: string; // e.g., offer_id, order_id
 }

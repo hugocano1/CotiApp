@@ -1,6 +1,6 @@
 // app/(seller)/(listas)/create-offer.tsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Modal, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ShoppingListService } from '../../../src/services/shoppingList.service';
 import { COLORS } from '../../../src/constants/colors';
@@ -17,6 +17,9 @@ const OfferItemCard = React.memo(({ item, onPriceChange, price }: { item: Shoppi
     return (
         <Card containerStyle={styles.itemCard}>
             <View style={styles.cardRow}>
+                {item.image_url && (
+                    <Image source={{ uri: item.image_url }} style={styles.itemImage} />
+                )}
                 <View style={styles.itemDetailsColumn}>
                     <Text style={styles.itemName}>{item.name}</Text>
                     <View style={styles.metaContainer}>
@@ -109,7 +112,7 @@ export default function CreateOfferScreen() {
         });
 
         if (!allPricesSet) {
-            Alert.alert("Precios Incompletos", "Por favor, ingresa un precio válido mayor a cero para todos los artículos antes de continuar.");
+            Alert.alert("Precios incompletos", "Por favor, ingresa un precio válido mayor a cero para todos los artículos antes de continuar.");
             return;
         }
         setModalVisible(true);
@@ -120,18 +123,23 @@ export default function CreateOfferScreen() {
 
         setSubmitting(true);
         try {
-            const itemsWithPrices: OfferItem[] = list.items.map(item => ({
-                item_name: `${item.name}__ID__${item.id}`,
-                quantity: item.quantity,
-                unit: item.unit,
-                brand: item.brand,
-                unit_price: parseFloat(itemPrices[item.id] || '0'),
-            }));
+            const itemsWithPrices: OfferItem[] = list.items.map(item => {
+                // Troyan Horse: We hide the list_item_id and image_url in the item_name field 
+                // to avoid losing them when the offer is created, as the offer_items table does not have these fields.
+                // The format is: itemName__ID__itemId__IMG__imageUrl
+                const itemNamePayload = `${item.name}__ID__${item.id}${item.image_url ? `__IMG__${item.image_url}` : ''}`;
+
+                return {
+                    item_name: itemNamePayload,
+                    quantity: item.quantity,
+                    unit: item.unit,
+                    brand: item.brand,
+                    unit_price: parseFloat(itemPrices[item.id] || '0'),
+                };
+            });
             
             await ShoppingListService.createDetailedOffer({
                 shopping_list_id: listId!,
-                buyer_id: list.buyer_id,
-                list_title: list.title,
                 total_price: finalTotal,
                 notes: notes,
                 items: itemsWithPrices,
@@ -142,7 +150,7 @@ export default function CreateOfferScreen() {
             Alert.alert("¡Éxito!", "Tu oferta ha sido enviada correctamente.");
             router.back();
         } catch (error: any) {
-            Alert.alert("Error al Enviar", `No se pudo enviar la oferta: ${error.message}`);
+            Alert.alert("Error al enviar", `No se pudo enviar la oferta: ${error.message}`);
         } finally {
             setSubmitting(false);
         }
@@ -158,9 +166,9 @@ export default function CreateOfferScreen() {
     
     const renderFooter = () => (
         <View style={styles.summaryContainer}>
-            <Text style={styles.totalText}>SUBTOTAL: {formatCurrency(totalItemsPrice)}</Text>
+            <Text style={styles.totalText}>Subtotal: {formatCurrency(totalItemsPrice)}</Text>
             <Button
-                title="Continuar y Finalizar"
+                title="Continuar y finalizar"
                 onPress={handleOpenSubmitModal}
                 color={COLORS.secondary}
                 buttonStyle={styles.button}
@@ -179,12 +187,12 @@ export default function CreateOfferScreen() {
         >
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
-                    <Text style={styles.modalTitle}>Finalizar Oferta</Text>
-                    <Text style={styles.modalTotalText}>Subtotal Artículos: {formatCurrency(totalItemsPrice)}</Text>
+                    <Text style={styles.modalTitle}>Finalizar oferta</Text>
+                    <Text style={styles.modalTotalText}>Subtotal artículos: {formatCurrency(totalItemsPrice)}</Text>
                     
                     {list?.delivery_type === 'delivery' && (
                         <View style={styles.modalInputContainer}>
-                            <Text style={styles.modalLabel}>Costo de Envío:</Text>
+                            <Text style={styles.modalLabel}>Costo de envío:</Text>
                             <TextInput
                                 style={styles.modalInput}
                                 placeholder="$0.00"
@@ -196,7 +204,7 @@ export default function CreateOfferScreen() {
                     )}
 
                     <View style={styles.modalInputContainer}>
-                        <Text style={styles.modalLabel}>Notas Adicionales (Opcional):</Text>
+                        <Text style={styles.modalLabel}>Notas adicionales (Opcional):</Text>
                         <TextInput
                             style={[styles.modalInput, styles.notesInput]}
                             placeholder="Ej: Puedo reemplazar la marca X por la Y..."
@@ -206,7 +214,7 @@ export default function CreateOfferScreen() {
                         />
                     </View>
                     
-                    <Text style={styles.modalFinalTotal}>TOTAL OFERTA: {formatCurrency(finalTotal)}</Text>
+                    <Text style={styles.modalFinalTotal}>Total oferta: {formatCurrency(finalTotal)}</Text>
 
                     <View style={styles.modalButtonContainer}>
                         <View style={styles.modalButtonWrapper}>
@@ -239,14 +247,14 @@ export default function CreateOfferScreen() {
     return (
         <KeyboardAvoidingView style={styles.container} behavior="padding">
              <View style={styles.header}>
-                <Text style={styles.title}>Crear Oferta</Text>
+                <Text style={styles.title}>Crear oferta</Text>
                 <Text style={styles.listTitle}>Para la lista: {list.title}</Text>
                 {list.buyer_profiles && <Text style={styles.buyerName}>Comprador: {list.buyer_profiles.nombre} {list.buyer_profiles.apellido}</Text>}
             </View>
             <View style={styles.infoBox}>
                 <Icon name="information-outline" type="material-community" color={COLORS.primary} size={18} />
                 <Text style={styles.infoText}>
-                    Consejo: Ingresa el precio por unidad. Si aplica, incluye los impuestos en el valor.
+                    Consejo: Ingresa el precio por unidad. Si el producto tiene impuestos incluyelos en el valor.
                 </Text>
             </View>
             <FlatList
@@ -273,7 +281,8 @@ const styles = StyleSheet.create({
     infoText: { fontSize: scaleFont(12), color: '#014a88', marginLeft: 8, flex: 1 },
     list: { flex: 1 },
     itemCard: { borderRadius: 10, marginHorizontal: 10, marginTop: 0, marginBottom: 8, padding: 0, elevation: 1 },
-    cardRow: { flexDirection: 'row', padding: 12 },
+    cardRow: { flexDirection: 'row', padding: 12, alignItems: 'center' },
+    itemImage: { width: 50, height: 50, borderRadius: 8, marginRight: 12, backgroundColor: '#e9e9e9' },
     itemDetailsColumn: { flex: 1, paddingRight: 10 },
     priceInputColumn: { alignItems: 'flex-end', justifyContent: 'center' },
     itemName: { fontSize: scaleFont(16), fontWeight: '600', color: COLORS.text, marginBottom: 8 },

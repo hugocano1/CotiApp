@@ -24,7 +24,8 @@ export class ShoppingListService {
       quantity: item.quantity,
       unit: item.unit,
       brand: item.brand || null,
-      notes: item.notes || null
+      notes: item.notes || null,
+      image_url: item.image_url || null
     }));
 
     const { error } = await supabase.from('shopping_lists').insert({
@@ -138,50 +139,24 @@ export class ShoppingListService {
 
   static async createDetailedOffer(data: {
     shopping_list_id: string;
-    buyer_id: string;
-    list_title: string;
     total_price: number;
     notes?: string;
     items: OfferItem[];
     shipping_cost: number;
   }) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Usuario no autenticado.");
-
-    // 1. Insert the main offer
-    const { data: offerData, error: offerError } = await supabase
-      .from('offers')
-      .insert({
-        shopping_list_id: data.shopping_list_id,
-        seller_id: user.id,
-        price: data.total_price,
-        notes: data.notes,
-        status: 'pending',
-        shipping_cost: data.shipping_cost,
-      })
-      .select('id')
-      .single();
-
-    if (offerError) {
-      console.error('Error creating offer:', offerError);
-      throw new Error(offerError.message);
-    }
-
-    const offer_id = offerData.id;
-
-    // 2. Prepare the offer items
-    const offerItems = data.items.map(item => {
+    // El RPC `create_offer_and_notify` se encarga de toda la transacción,
+    // incluyendo la creación de la oferta, sus artículos y la notificación push.
+    
+    // Preparamos los artículos para el formato JSON que espera la función RPC.
+    // Aquí revertimos el workaround del `__ID__` que se añade en el cliente.
+    const itemsForRpc = data.items.map(item => {
       const parts = item.item_name.split('__ID__');
       if (parts.length !== 2) {
         throw new Error(`ID del artículo de la lista no encontrado en el nombre: "${item.item_name}"`);
       }
-      const realName = parts[0];
-      const listItemId = parts[1];
-
       return {
-        offer_id: offer_id,
-        list_item_id: listItemId,
-        item_name: realName,
+        item_name: parts[0], // Nombre real
+        list_item_id: parts[1], // ID del artículo de la lista original
         quantity: item.quantity,
         unit: item.unit,
         brand: item.brand,
@@ -189,31 +164,20 @@ export class ShoppingListService {
       };
     });
 
-    // 3. Insert the detailed items
-    const { error: itemsError } = await supabase.from('offer_items').insert(offerItems);
-
-    if (itemsError) {
-      console.error('Error creating offer items:', itemsError);
-      await supabase.from('offers').delete().eq('id', offer_id);
-      throw new Error(itemsError.message);
-    }
-
-    // 4. Create a notification for the buyer
-    const { error: notificationError } = await supabase.from('notifications').insert({
-      user_id: data.buyer_id,
-      title: '¡Nueva oferta recibida!',
-      body: `Has recibido una nueva oferta para tu lista "${data.list_title}"`,
-      type: 'new_offer',
-      reference_id: offer_id,
+    const { data: offerId, error } = await supabase.rpc('create_offer_and_notify', {
+      p_shopping_list_id: data.shopping_list_id,
+      p_total_price: data.total_price,
+      p_notes: data.notes,
+      p_shipping_cost: data.shipping_cost,
+      p_items: itemsForRpc,
     });
 
-    if (notificationError) {
-      // Log the error, but don't throw, as the offer was successfully created.
-      // The user can still see the offer in the app.
-      console.error('Error creating notification:', notificationError.message);
+    if (error) {
+      console.error('Error calling create_offer_and_notify RPC:', error);
+      throw new Error(`No se pudo crear la oferta: ${error.message}`);
     }
 
-    return { success: true, offerId: offer_id };
+    return { success: true, offerId };
   }
 
   static async deleteShoppingList(listId: string) {

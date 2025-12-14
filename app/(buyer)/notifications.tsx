@@ -12,7 +12,6 @@ export default function BuyerNotificationsScreen() {
   const router = useRouter();
   const navigation = useNavigation();
 
-  // Hook para configurar opciones de la pantalla modal
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -27,25 +26,38 @@ export default function BuyerNotificationsScreen() {
     if (!notification.is_read) {
       markAsRead(notification.id);
     }
-    // Navega a la pantalla de detalle del pedido si existe el orderId
-    if (notification.data?.orderId) {
-      // Cierra el modal antes de navegar
+
+    const navigate = (path: string) => {
       router.back(); 
-      // Pequeño delay para asegurar que el modal se cierre antes de la navegación
       setTimeout(() => {
-        router.push(`/(buyer)/(mis-pedidos)/order-details/${notification.data.orderId}`);
+        router.push(path as any);
       }, 100);
+    };
+
+    if (notification.data?.orderId) {
+      navigate(`/(buyer)/(mis-pedidos)/order-details/${notification.data.orderId}`);
+    } else if (notification.type === 'new_offer' && notification.data?.listId) {
+      navigate(`/(buyer)/(mis-listas)/list-details/${notification.data.listId}`);
     }
   };
+  
+  const getIconName = (item: Notification) => {
+    if (item.data?.orderId) return 'receipt-text-check-outline';
+    if (item.type === 'new_offer') return 'tag-outline';
+    return 'bell-outline';
+  };
 
-  const renderNotificationItem = ({ item }: { item: Notification }) => (
+  const renderNotificationItem = ({ item }: { item: Notification }) => {
+    const isNavigable = item.data?.orderId || (item.type === 'new_offer' && item.data?.listId);
+
+    return (
     <ListItem
       bottomDivider
       onPress={() => handleNotificationPress(item)}
       containerStyle={!item.is_read ? styles.unreadItem : styles.readItem}
     >
       <Icon 
-        name={item.data?.orderId ? 'receipt-text-check-outline' : 'bell-outline'} 
+        name={getIconName(item)} 
         type="material-community" 
         color={!item.is_read ? COLORS.primary : COLORS.gray}
         size={28}
@@ -62,9 +74,10 @@ export default function BuyerNotificationsScreen() {
         </Text>
       </ListItem.Content>
       {!item.is_read && <View style={styles.unreadDot} />}
-      {item.data?.orderId && <ListItem.Chevron />}
+      {isNavigable && <ListItem.Chevron />}
     </ListItem>
-  );
+    )
+  };
 
   if (loading) {
     return (

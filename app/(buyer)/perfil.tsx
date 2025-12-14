@@ -11,6 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { scaleFont } from '../../src/utils/responsive';
 import { BuyerProfile } from '../../src/types/entities';
+import { AuthService } from '../../src/services/auth/auth.service'; // ✅ IMPORTADO
 
 const InfoItem = ({ icon, text, value }: { icon: string, text: string, value: string | number }) => {
     return (
@@ -116,6 +117,15 @@ export default function BuyerProfileScreen() {
             setSaving(false);
         }
     };
+
+    // ✅ NUEVA FUNCIÓN DE LOGOUT
+    const handleSignOut = async () => {
+        try {
+            await AuthService.signOut(session?.user);
+        } catch (error: any) {
+            Alert.alert("Error", error.message);
+        }
+    };
     
     const calculateAge = (birthDateString: string | undefined) => {
         if (!birthDateString) return 'No establecido';
@@ -137,7 +147,6 @@ export default function BuyerProfileScreen() {
         return <View style={styles.centered}><Text>Perfil no válido</Text></View>;
     }
 
-    // At this point, profile is a BuyerProfile
     const buyerProfile = profile as BuyerProfile;
     const displayName = editMode ? editedName : (buyerProfile.nombre || 'Usuario');
     const displayAvatar = selectedImageUri || buyerProfile.foto_perfil;
@@ -210,7 +219,8 @@ export default function BuyerProfileScreen() {
                         <Button title="Editar Perfil" onPress={() => setEditMode(true)} buttonStyle={{ backgroundColor: COLORS.secondary }} icon={{ name: 'pencil-outline', type: 'material-community', color: 'white' }} />
                     )}
                 </View>
-                <Button title="Cerrar Sesión" onPress={() => supabase.auth.signOut()} type="clear" titleStyle={styles.logoutButtonTitle} />
+                {/* ✅ BOTÓN DE LOGOUT MODIFICADO */}
+                <Button title="Cerrar Sesión" onPress={handleSignOut} type="clear" titleStyle={styles.logoutButtonTitle} />
             </ScrollView>
 
             <BottomSheet isVisible={isGenderPickerVisible} onBackdropPress={() => setGenderPickerVisible(false)}>

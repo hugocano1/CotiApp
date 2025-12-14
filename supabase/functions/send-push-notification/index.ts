@@ -6,6 +6,7 @@ interface NotificationPayload {
   push_token: string;
   title: string;
   message: string;
+  data?: Record<string, any>; // Optional data field
 }
 
 // URL de la API de notificaciones de Expo
@@ -20,7 +21,7 @@ serve(async (req: Request) => {
   try {
     // 2. Extraer y validar el payload (SIN la envoltura "record")
     const payload: NotificationPayload = await req.json();
-    const { push_token, title, message } = payload;
+    const { push_token, title, message, data } = payload;
 
     if (!push_token || !title || !message) {
       return new Response(JSON.stringify({ error: 'Missing push_token, title, or message' }), {
@@ -42,6 +43,7 @@ serve(async (req: Request) => {
         sound: 'default',
         title: title,
         body: message,
+        data: data, // Include the custom data field
       }),
     });
 

@@ -1,5 +1,5 @@
 import { supabase } from '../../services/auth/config/supabaseClient';
-import { AuthError } from '@supabase/supabase-js';
+import { AuthError, User } from '@supabase/supabase-js'; // ✅ IMPORTAR User
 import { Alert } from 'react-native';
 
 export { AuthError } from '@supabase/supabase-js'; // Re-export AuthError
@@ -38,7 +38,29 @@ export class AuthService {
     return data.user;
   }
 
-  static async signOut() {
+  // ✅ MODIFICADO para limpiar el push_token
+  static async signOut(user: User | null | undefined) {
+    if (user) {
+      try {
+        const userRole = user.user_metadata.user_type;
+        const profileTable = userRole === 'seller' ? 'seller_profiles' : 'buyer_profiles';
+        
+        // Actualizar el push_token a null
+        const { error: updateError } = await supabase
+          .from(profileTable)
+          .update({ push_token: null })
+          .eq('user_id', user.id);
+
+        if (updateError) {
+          // Opcional: loguear el error pero no impedir el signOut
+          console.error('Error clearing push token:', updateError.message);
+        }
+      } catch (e) {
+         console.error('Failed to clear push token during sign out:', e);
+      }
+    }
+    
+    // Proceder con el signOut de todas formas
     const { error } = await supabase.auth.signOut();
     if (error) throw this.handleAuthError(error);
   }

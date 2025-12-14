@@ -10,6 +10,7 @@ import { COLORS } from '../../src/constants/colors';
 import * as ImagePicker from 'expo-image-picker';
 import { scaleFont } from '../../src/utils/responsive';
 import { SellerProfile } from '../../src/types/entities';
+import { AuthService } from '../../src/services/auth/auth.service'; // ✅ IMPORTADO
 
 const InfoItem = ({ icon, text, value }: { icon: string, text: string, value: string | number }) => (
     <View style={styles.infoRow}>
@@ -124,6 +125,15 @@ export default function SellerProfileScreen() {
             setSaving(false);
         }
     };
+
+    // ✅ NUEVA FUNCIÓN DE LOGOUT
+    const handleSignOut = async () => {
+        try {
+            await AuthService.signOut(session?.user);
+        } catch (error: any) {
+            Alert.alert("Error", error.message);
+        }
+    };
     
     if (loading || !profile || role !== 'seller') {
         return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
@@ -193,7 +203,8 @@ export default function SellerProfileScreen() {
                         <Button title="Editar Perfil" onPress={() => setEditMode(true)} buttonStyle={{ backgroundColor: COLORS.secondary }} icon={{ name: 'pencil-outline', type: 'material-community', color: 'white' }} />
                     )}
                 </View>
-                <Button title="Cerrar Sesión" onPress={() => supabase.auth.signOut()} type="clear" titleStyle={styles.logoutButtonTitle} />
+                {/* ✅ BOTÓN DE LOGOUT MODIFICADO */}
+                <Button title="Cerrar Sesión" onPress={handleSignOut} type="clear" titleStyle={styles.logoutButtonTitle} />
             </ScrollView>
         </SafeAreaView>
     );

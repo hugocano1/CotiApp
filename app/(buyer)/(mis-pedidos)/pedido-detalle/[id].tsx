@@ -1,6 +1,5 @@
-// Ruta: app/(buyer)/(mis-pedidos)/pedido-detalle/[id].tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, Image } from 'react-native';
 import { Card, Icon, Button } from '@rneui/themed';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useOrderDetails } from '../../../../src/hooks/useOrderDetails';
@@ -10,10 +9,20 @@ import { scaleFont } from '../../../../src/utils/responsive';
 import { InfoRow } from '../../../../src/components/InfoRow';
 import { StatusDisplay, CardTitle } from '../../../../src/components/OrderComponents';
 import { formatCurrency } from '../../../../src/utils/formatters';
-import { ShoppingListItem } from '../../../../src/types/entities';
+import { OfferItem } from '../../../../src/types/entities';
 import { RatingModal } from '../../../../src/components/RatingModal';
 import { ConfirmReceiptModal } from '../../../../src/components/ConfirmReceiptModal';
 import { CancelOrderModal } from '../../../../src/components/CancelOrderModal';
+
+// Helper para parsear el item_name
+const parseItemName = (itemName: string) => {
+  const imgParts = itemName.split('__IMG__');
+  const nameAndIdParts = imgParts[0].split('__ID__');
+  return {
+    displayName: nameAndIdParts[0],
+    imageUrl: imgParts.length > 1 ? imgParts[1] : null,
+  };
+};
 
 export default function BuyerOrderDetailsScreen() {
   const { id: orderId } = useLocalSearchParams();
@@ -93,16 +102,25 @@ export default function BuyerOrderDetailsScreen() {
       <Card containerStyle={styles.card}>
         <CardTitle title="Productos del Pedido" iconName="basket" />
         <Card.Divider />
-        {(listInfo?.items || []).map((item: ShoppingListItem, index: number) => (
-          <View key={index} style={styles.itemContainer}>
-            <View style={styles.itemRow}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemQuantity}>{item.quantity} {item.unit || ''}</Text>
-            </View>
-            {item.brand && <Text style={styles.itemDetails}>Marca: {item.brand}</Text>}
-            {item.notes && <Text style={styles.itemDetails}>Notas: {item.notes}</Text>}
-          </View>
-        ))}
+        {(order?.items || []).map((item: OfferItem, index: number) => {
+            const { displayName, imageUrl } = parseItemName(item.item_name);
+            const totalItemPrice = item.quantity * item.unit_price;
+
+            return (
+              <View key={item.id || index} style={styles.itemContainer}>
+                <View style={styles.itemRow}>
+                    {imageUrl && <Image source={{ uri: imageUrl }} style={styles.itemImage} />}
+                    <View style={styles.itemTextContainer}>
+                      <Text style={styles.itemName}>{displayName}</Text>
+                      <Text style={styles.itemDetails}>
+                        {item.quantity} {item.unit || ''} x {formatCurrency(item.unit_price)}
+                      </Text>
+                    </View>
+                    <Text style={styles.itemPrice}>{formatCurrency(totalItemPrice)}</Text>
+                </View>
+              </View>
+            );
+        })}
       </Card>
 
       <Card containerStyle={styles.card}>
@@ -134,7 +152,7 @@ export default function BuyerOrderDetailsScreen() {
         isVisible={isConfirmModalVisible}
         onClose={() => setConfirmModalVisible(false)}
         onConfirm={handleConfirmDelivery}
-        items={listInfo?.items || []}
+        items={order?.items.map(i => ({...i, name: parseItemName(i.item_name).displayName})) || []}
       />
 
       <CancelOrderModal
@@ -153,10 +171,12 @@ const styles = StyleSheet.create({
   card: { borderRadius: 12, marginHorizontal: 12, marginBottom: 8, paddingBottom: 10 },
   headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerTitle: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.primary, flex: 1 },
-  itemContainer: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-  itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  itemName: { fontSize: scaleFont(14), fontWeight: '500', color: COLORS.text, flex: 1 },
-  itemQuantity: { fontSize: scaleFont(14), fontWeight: 'bold', color: COLORS.primary },
+  itemContainer: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  itemRow: { flexDirection: 'row', alignItems: 'center' },
+  itemImage: { width: 40, height: 40, borderRadius: 6, marginRight: 10, backgroundColor: '#eee' },
+  itemTextContainer: { flex: 1 },
+  itemName: { fontSize: scaleFont(14), fontWeight: '500', color: COLORS.text, marginBottom: 3 },
+  itemPrice: { fontSize: scaleFont(14), fontWeight: 'bold', color: COLORS.primary },
   itemDetails: { fontSize: scaleFont(12), color: COLORS.gray, marginTop: 4 },
   infoText: { textAlign: 'center', color: COLORS.gray, fontStyle: 'italic', padding: 10},
   modalView: { backgroundColor: COLORS.primary, borderRadius: 20, padding: 35, alignItems: 'center', width: '90%' },

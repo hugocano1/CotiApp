@@ -13,7 +13,8 @@ export class OrderService {
       .select<string, Order>(
         `
         *,
-        shopping_lists ( title, items, delivery_date, delivery_type, delivery_address_text ),
+        items,
+        shopping_lists ( title, delivery_date, delivery_type, delivery_address_text ),
         buyer_profiles:buyer_id ( nombre, apellido ),
         seller_profiles:seller_id ( nombre, stores ( name ) )
       `

@@ -114,12 +114,12 @@ export default function OfferDetailsScreen() {
         </View>
         <View style={styles.compactInfoRow}>
           <Icon name="calendar-clock" type="material-community" color={COLORS.secondary} size={16} />
-          <Text style={styles.compactLabel}>Fecha Solicitada:</Text>
+          <Text style={styles.compactLabel}>Fecha solicitada:</Text>
           <Text style={styles.compactValue}>{deliveryDate}</Text>
         </View>
         <View style={styles.compactInfoRow}>
           <Icon name="truck" type="material-community" color={COLORS.secondary} size={16} />
-          <Text style={styles.compactLabel}>Tipo de Entrega:</Text>
+          <Text style={styles.compactLabel}>Tipo de entrega:</Text>
           <Text style={styles.compactValue}>{deliveryType}</Text>
         </View>
         <View style={styles.compactInfoRow}>
@@ -132,7 +132,7 @@ export default function OfferDetailsScreen() {
       {/* Card 3: Itemized Offer (if it exists) */}
       {details.offer_items && details.offer_items.length > 0 && (
         <Card containerStyle={styles.card}>
-          <CardTitle title="Artículos de tu Oferta" iconName="basket" />
+          <CardTitle title="Artículos de tu oferta" iconName="basket" />
           <Card.Divider />
           {details.offer_items.map((item: OfferItem, index: number) => (
             <View key={index} style={styles.itemContainer}>
@@ -151,7 +151,7 @@ export default function OfferDetailsScreen() {
 
       {/* Footer: Final Total Price */}
       <View style={styles.totalContainer}>
-        <Text style={styles.totalLabel}>VALOR TOTAL DE LA OFERTA</Text>
+        <Text style={styles.totalLabel}>Valor total de la oferta</Text>
         <Text style={styles.totalValue}>{formatCurrency(finalTotalPrice)}</Text>
       </View>
     </ScrollView>

@@ -83,7 +83,7 @@ const MapPreviewCard = ({ lists, loading, onPress }: { lists: ShoppingListPrevie
         <TouchableOpacity onPress={onPress} style={styles.mapCard}>
             <View style={styles.mapCardHeader}>
                 <Icon name="map-marker-multiple" type="material-community" color={COLORS.primary} />
-                <Text style={styles.mapCardTitle}>Nuevos Pedidos Cercanos</Text>
+                <Text style={styles.mapCardTitle}>Nuevos pedidos cercanos</Text>
             </View>
             <Text style={styles.mapCardSubtitle}>Hay {lists.length} listas con entrega a domicilio disponibles cerca de ti.</Text>
             <View style={styles.mapPreviewContainer}>
@@ -135,7 +135,7 @@ export default function SellerHomeScreen() {
 
                 <View style={styles.contentContainer}>
                     <Text style={styles.panelTitle}>Panel de vendedor</Text>
-                    <Text style={styles.subtitle}>Gestiona tus pedidos y aumenta tus ventas descubriendo clientes nuevos.</Text>
+                    <Text style={styles.subtitle}>Aumenta tus ventas descubriendo clientes nuevos.</Text>
                     
                     <MapPreviewCard 
                         lists={activeLists} 
@@ -191,15 +191,7 @@ const styles = StyleSheet.create({
     subtitle: { fontSize: scaleFont(14), color: COLORS.gray, marginTop: 4, textAlign: 'center', marginBottom: 15, paddingHorizontal: 10 },
     
     mapCard: {
-        backgroundColor: COLORS.white,
         marginHorizontal: 20,
-        borderRadius: 16,
-        padding: 16,
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
         marginBottom: 20,
     },
     mapCardHeader: {
@@ -219,12 +211,13 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     mapPreviewContainer: {
-        height: 150,
-        borderRadius: 12,
+        height: 250, // Increased height for a larger map view
+        // borderRadius: 12, // Removed for no card frame
         overflow: 'hidden',
         backgroundColor: '#f0f0f0',
         justifyContent: 'center',
         alignItems: 'center',
+        marginHorizontal: -20, // To span full width visually
     },
     map: {
         ...StyleSheet.absoluteFillObject,
