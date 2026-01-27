@@ -1,13 +1,23 @@
 // app/(seller)/(offers)/offer-details/[id].tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, Image } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Card, Icon } from '@rneui/themed';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
-import { COLORS } from '../../../../src/constants/colors';
+import { COLORS } from '../../../../constants/Colors';
 import { InfoRow } from '../../../../src/components/InfoRow';
 import { scaleFont } from '../../../../src/utils/responsive';
 import { Offer, OfferItem } from '../../../../src/types/entities';
+
+// Helper para parsear el item_name
+const parseItemName = (itemName: string) => {
+  const imgParts = itemName.split('__IMG__');
+  const nameAndIdParts = imgParts[0].split('__ID__');
+  return {
+    displayName: nameAndIdParts[0],
+    imageUrl: imgParts.length > 1 ? imgParts[1] : null,
+  };
+};
 
 const formatCurrency = (value: number) => {
     return `$${Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
@@ -91,7 +101,7 @@ export default function OfferDetailsScreen() {
         <View style={styles.compactInfoRow}>
           <Icon name="clock-outline" type="material-community" color={COLORS.secondary} size={16} />
           <Text style={styles.compactLabel}>Tiempo de entrega:</Text>
-          <Text style={styles.compactValue}>{details.deliveryTime || 'No especificado'}</Text>
+          <Text style={styles.compactValue}>{(details as any).deliveryTime || 'No especificado'}</Text>
         </View>
         {details.notes && (
           <View style={styles.compactInfoRow}>
@@ -102,7 +112,6 @@ export default function OfferDetailsScreen() {
         )}
       </Card>
 
-      {/* Card 2: Original List Details */}
       {/* Card 2: Original List Details (NOW COMPACT) */}
       <Card containerStyle={styles.compactCard}>
         <CardTitle title="Detalles de la Lista Original" />
@@ -134,18 +143,24 @@ export default function OfferDetailsScreen() {
         <Card containerStyle={styles.card}>
           <CardTitle title="Artículos de tu oferta" iconName="basket" />
           <Card.Divider />
-          {details.offer_items.map((item: OfferItem, index: number) => (
-            <View key={index} style={styles.itemContainer}>
-              <View style={styles.itemRowTop}>
-                <Text style={styles.itemName}>{item.item_name}</Text>
-                {item.unit_price && <Text style={styles.itemPrice}>{formatCurrency(item.unit_price)}</Text>}
+          {details.offer_items.map((item: OfferItem, index: number) => {
+            const { displayName, imageUrl } = parseItemName(item.item_name);
+            const totalItemPrice = (item.unit_price || 0) * (item.quantity || 1);
+            
+            return (
+              <View key={index} style={styles.itemContainer}>
+                {imageUrl && <Image source={{ uri: imageUrl }} style={styles.itemImage} />}
+                <View style={styles.itemTextContainer}>
+                  <Text style={styles.itemName} numberOfLines={2}>{displayName}</Text>
+                  <View style={styles.itemRowBottom}>
+                    <Text style={styles.itemDetails}>Cantidad: {item.quantity} {item.unit || ''}</Text>
+                    {item.brand && <Text style={styles.itemDetails}>· Marca: {item.brand}</Text>}
+                  </View>
+                </View>
+                <Text style={styles.itemPrice}>{formatCurrency(totalItemPrice)}</Text>
               </View>
-              <View style={styles.itemRowBottom}>
-                <Text style={styles.itemDetails}>Cantidad: {item.quantity} {item.unit || ''}</Text>
-                {item.brand && <Text style={styles.itemDetails}>Marca: {item.brand}</Text>}
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </Card>
       )}
 
@@ -175,12 +190,13 @@ const styles = StyleSheet.create({
   compactLabel: { marginLeft: 10, fontSize: scaleFont(13), color: COLORS.gray },
   compactValue: { marginLeft: 8, fontSize: scaleFont(13), fontWeight: '500', flex: 1, textAlign: 'right' },
 
-  itemContainer: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }, 
-  itemRowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  itemRowBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-  itemName: { fontSize: scaleFont(15), fontWeight: '500', color: COLORS.text, flex: 1, marginRight: 10 }, 
-  itemPrice: { fontSize: scaleFont(15), fontWeight: 'bold', color: COLORS.primary },
-  itemDetails: { fontSize: scaleFont(13), color: COLORS.gray }, 
+  itemImage: { width: 50, height: 50, borderRadius: 8, marginRight: 12, backgroundColor: '#e9e9e9' },
+  itemTextContainer: { flex: 1, justifyContent: 'center' },
+  itemContainer: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  itemRowBottom: { flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' },
+  itemName: { fontSize: scaleFont(14), fontWeight: '500', color: COLORS.text, marginBottom: 4 },
+  itemPrice: { fontSize: scaleFont(15), fontWeight: 'bold', color: COLORS.primary, marginLeft: 10 },
+  itemDetails: { fontSize: scaleFont(12), color: COLORS.gray, marginRight: 10 },
 
   totalContainer: {
     margin: 15,

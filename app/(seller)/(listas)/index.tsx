@@ -1,13 +1,14 @@
 // Ruta: app/(seller)/(listas)/index.tsx
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { ButtonGroup } from '@rneui/themed';
+import { ButtonGroup, Icon } from '@rneui/themed';
 import { Link, useRouter, useFocusEffect } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import { supabase } from '../../../src/services/auth/config/supabaseClient';
-import { COLORS } from '../../../src/constants/colors';
+import { COLORS } from '../../../constants/Colors';
 import { SellerListItem } from '../../../src/components/SellerListItem';
 import { scaleFont } from '../../../src/utils/responsive';
+import { formatCurrency } from '../../../src/utils/formatters';
 import { ShoppingList } from '../../../src/types/entities';
 
 const { height } = Dimensions.get('window');
@@ -93,10 +94,19 @@ export default function AvailableListsScreen() {
                 <Marker
                   key={list.id}
                   coordinate={{ latitude: list.latitude!, longitude: list.longitude! }}
-                  title={list.title}
-                  description={`Presupuesto: $${list.min_budget || 'N/A'} - $${list.max_budget || 'N/A'}`}
                   onPress={() => handleMarkerPress(list.id)}
-                />
+                >
+                    <View style={styles.markerContainer}>
+                        {list.min_budget && (
+                            <View style={styles.markerBadge}>
+                                <Text style={styles.markerText}>
+                                    {formatCurrency(list.min_budget)}
+                                </Text>
+                            </View>
+                        )}
+                        <Icon name="map-marker" type="material-community" color={COLORS.danger} size={36} />
+                    </View>
+                </Marker>
               ))}
             </MapView>
           )}
@@ -178,4 +188,20 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(16),
     color: COLORS.gray,
   },
+  markerContainer: { alignItems: 'center', justifyContent: 'center' },
+  markerBadge: {
+    backgroundColor: 'white',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.danger,
+    marginBottom: 2,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+  },
+  markerText: { fontSize: scaleFont(10), fontWeight: 'bold', color: COLORS.text },
 });

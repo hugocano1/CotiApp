@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, RefreshControl, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useSellerOrders } from '../../../src/hooks/useSellerOrders';
 import { Link } from 'expo-router';
-import { COLORS } from '../../../src/constants/colors';
+import { COLORS } from '../../../constants/Colors';
 import { OrderListItem } from '../../../src/components/OrderListItem';
 import { ButtonGroup } from '@rneui/themed';
 import { scaleFont } from '../../../src/utils/responsive';

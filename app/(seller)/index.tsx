@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity
 import { Icon } from '@rneui/themed';
 import { Link, useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
-import { COLORS } from '../../src/constants/colors';
+import { COLORS } from '../../constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSellerOrders } from '../../src/hooks/useSellerOrders';
 import { useSellerOffers } from '../../src/hooks/useSellerOffers';
@@ -12,8 +12,11 @@ import { useUserProfile } from '../../src/hooks/useUserProfile';
 import { OrderListItem } from '../../src/components/OrderListItem';
 import { OfferListItem } from '../../src/components/OfferListItem';
 import { scaleFont } from '../../src/utils/responsive';
+import { formatCurrency } from '../../src/utils/formatters';
 import { ShoppingList } from '../../src/types/entities';
 import { supabase } from '../../src/services/auth/config/supabaseClient';
+import { useColorScheme } from '../../components/useColorScheme';
+import themes from '../../constants/Colors';
 
 // Define a specific type for the list preview used in the map
 type ShoppingListPreview = {
@@ -91,7 +94,20 @@ const MapPreviewCard = ({ lists, loading, onPress }: { lists: ShoppingListPrevie
                     <ActivityIndicator />
                 ) : (
                     <MapView style={styles.map} initialRegion={initialRegion} scrollEnabled={false} zoomEnabled={false}>
-                        {lists.map(list => <Marker key={list.id} coordinate={{ latitude: list.latitude, longitude: list.longitude }} />)}
+                        {lists.map(list => (
+                            <Marker key={list.id} coordinate={{ latitude: list.latitude, longitude: list.longitude }}>
+                                <View style={styles.markerContainer}>
+                                    {list.min_budget && (
+                                        <View style={styles.markerBadge}>
+                                            <Text style={styles.markerText}>
+                                                {formatCurrency(list.min_budget)}
+                                            </Text>
+                                        </View>
+                                    )}
+                                    <Icon name="map-marker" type="material-community" color={COLORS.danger} size={36} />
+                                </View>
+                            </Marker>
+                        ))}
                     </MapView>
                 )}
             </View>
@@ -108,6 +124,9 @@ export default function SellerHomeScreen() {
     const router = useRouter();
     const navigation = useNavigation();
     const { profile } = useUserProfile();
+    
+    const colorScheme = useColorScheme();
+    const themeColors = themes[colorScheme ?? 'light'];
     
     const { orders: allOrders, loading: ordersLoading, error: ordersError } = useSellerOrders();
     const pendingOrders = allOrders.filter(order => order.status === 'confirmed');
@@ -134,8 +153,8 @@ export default function SellerHomeScreen() {
                 </View>
 
                 <View style={styles.contentContainer}>
-                    <Text style={styles.panelTitle}>Panel de vendedor</Text>
-                    <Text style={styles.subtitle}>Aumenta tus ventas descubriendo clientes nuevos.</Text>
+                    <Text style={styles.panelTitle}>Panel de Vendedor</Text>
+                    {/* Subtitle removed as requested */}
                     
                     <MapPreviewCard 
                         lists={activeLists} 
@@ -168,7 +187,7 @@ export default function SellerHomeScreen() {
                                 <View key={offer.id} style={styles.cardSpacing}>
                                     <Link key={offer.id} href={{ pathname: `/(seller)/(offers)/offer-details/[id]`, params: {id: offer.id} }} asChild>
                                         <TouchableOpacity>
-                                            <OfferListItem offer={offer} />
+                                            <OfferListItem offer={offer} themeColors={themeColors} />
                                         </TouchableOpacity>
                                     </Link>
                                 </View>
@@ -187,7 +206,7 @@ const styles = StyleSheet.create({
     promoImageContainer: { height: 180, backgroundColor: COLORS.primary },
     promoImage: { width: '100%', height: '100%', resizeMode: 'cover' },
     contentContainer: { paddingTop: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20, marginTop: -20, backgroundColor: COLORS.background },
-    panelTitle: { fontSize: scaleFont(22), fontWeight: 'bold', color: COLORS.primary, textAlign: 'center' },
+    panelTitle: { fontSize: scaleFont(16), fontWeight: '600', color: COLORS.liziDark, textAlign: 'center', marginBottom: 15, opacity: 0.8 },
     subtitle: { fontSize: scaleFont(14), color: COLORS.gray, marginTop: 4, textAlign: 'center', marginBottom: 15, paddingHorizontal: 10 },
     
     mapCard: {
@@ -239,4 +258,22 @@ const styles = StyleSheet.create({
     seeAllText: { color: COLORS.secondary, fontWeight: '500' },
     emptyText: { textAlign: 'center', color: COLORS.gray, margin: 20 },
     cardSpacing: { marginTop: -3 },
+    
+    // Estilos del Marcador Personalizado
+    markerContainer: { alignItems: 'center', justifyContent: 'center' },
+    markerBadge: {
+        backgroundColor: 'white',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: COLORS.danger,
+        marginBottom: 2,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1.41,
+    },
+    markerText: { fontSize: scaleFont(10), fontWeight: 'bold', color: COLORS.text },
 });

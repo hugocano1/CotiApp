@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, View, Text, ScrollView } from 'react-native';
 import { useShoppingLists } from '../../../src/hooks/useShoppingLists';
 import { Link } from 'expo-router';
-import { COLORS } from '../../../src/constants/colors';
+import { COLORS } from '../../../constants/Colors';
 import { ShoppingListItem } from '../../../src/components/ShoppingListItem';
 import { ButtonGroup, Icon } from '@rneui/themed';
 import { scaleFont } from '../../../src/utils/responsive';

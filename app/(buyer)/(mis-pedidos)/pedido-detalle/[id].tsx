@@ -4,7 +4,7 @@ import { Card, Icon, Button } from '@rneui/themed';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useOrderDetails } from '../../../../src/hooks/useOrderDetails';
 import { OrderService } from '../../../../src/services/order.service';
-import { COLORS } from '../../../../src/constants/colors';
+import { COLORS } from '../../../../constants/Colors';
 import { scaleFont } from '../../../../src/utils/responsive';
 import { InfoRow } from '../../../../src/components/InfoRow';
 import { StatusDisplay, CardTitle } from '../../../../src/components/OrderComponents';
@@ -102,7 +102,7 @@ export default function BuyerOrderDetailsScreen() {
       <Card containerStyle={styles.card}>
         <CardTitle title="Productos del Pedido" iconName="basket" />
         <Card.Divider />
-        {(order?.items || []).map((item: OfferItem, index: number) => {
+        {(order?.shopping_lists?.items || []).map((item: OfferItem, index: number) => {
             const { displayName, imageUrl } = parseItemName(item.item_name);
             const totalItemPrice = item.quantity * item.unit_price;
 
@@ -126,8 +126,19 @@ export default function BuyerOrderDetailsScreen() {
       <Card containerStyle={styles.card}>
         <CardTitle title="Gestionar mi Pedido" />
         <Card.Divider />
-        {order.status === 'enviado' && (
-           <Button title="Confirmar Pedido Recibido" onPress={() => setConfirmModalVisible(true)} buttonStyle={{backgroundColor: COLORS.secondary}} icon={<Icon name="check-circle" type="material-community" color="white" containerStyle={{marginRight: 10}} />} />
+        {(order.status === 'in_transit' || order.status === 'ready_for_pickup') && (
+           <Button 
+            title="Confirmar Pedido Recibido" 
+            onPress={() => setConfirmModalVisible(true)} 
+            buttonStyle={{backgroundColor: COLORS.secondary}} 
+            icon={<Icon name="check-circle" type="material-community" color="white" containerStyle={{marginRight: 10}} />} 
+          />
+        )}
+        {order.status === 'delivered_pending_confirmation' && (
+           <View>
+             <Text style={styles.infoText}>Ya confirmaste que recibiste el pedido. ✅</Text>
+             <Text style={styles.infoText}>Esperando que el vendedor confirme el pago para cerrar el ciclo.</Text>
+           </View>
         )}
         {order.status === 'completed' && !order.rating_for_seller && (
            <Button title="Calificar a Vendedor" onPress={() => setRatingModalVisible(true)} buttonStyle={{backgroundColor: COLORS.accent}} titleStyle={{color: COLORS.primary, fontWeight: 'bold'}} />
@@ -152,7 +163,7 @@ export default function BuyerOrderDetailsScreen() {
         isVisible={isConfirmModalVisible}
         onClose={() => setConfirmModalVisible(false)}
         onConfirm={handleConfirmDelivery}
-        items={order?.items.map(i => ({...i, name: parseItemName(i.item_name).displayName})) || []}
+        items={order?.shopping_lists?.items.map(i => ({...i, name: parseItemName(i.item_name).displayName})) || []}
       />
 
       <CancelOrderModal

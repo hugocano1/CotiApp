@@ -2,19 +2,24 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, Avatar } from '@rneui/themed';
-import { COLORS } from '../constants/colors';
+
+import themes, { COLORS } from '../../constants/Colors'; // Importamos themes por defecto y COLORS
 import { scaleFont } from '../utils/responsive';
 import { Offer } from '../types/entities';
 import { formatCurrency } from '../utils/formatters';
 
-const statusConfig = {
-  pending: { text: 'Enviada', color: COLORS.accent },
-  accepted: { text: 'Aceptada', color: COLORS.secondary },
-  rejected: { text: 'Rechazada', color: COLORS.danger },
-  default: { text: 'Enviada', color: COLORS.accent },
-};
+type ThemeColors = typeof themes.light;
 
-export function OfferListItem({ offer }: { offer: Offer }) {
+export function OfferListItem({ offer, themeColors }: { offer: Offer, themeColors: ThemeColors }) {
+  const styles = createStyles(themeColors);
+
+  const statusConfig = {
+    pending: { text: 'Enviada', color: themeColors.tabIconDefault }, // Gris para estado neutro
+    accepted: { text: 'Aceptada', color: themeColors.tint }, // Verde para éxito
+    rejected: { text: 'Rechazada', color: themeColors.accent }, // Rojo para atención/falla
+    default: { text: 'Enviada', color: themeColors.tabIconDefault },
+  };
+
   const buyerProfile = offer.shopping_lists?.buyer_profiles;
   const displayName =
     buyerProfile?.nombre
@@ -34,6 +39,7 @@ export function OfferListItem({ offer }: { offer: Offer }) {
             source={displayAvatar ? { uri: displayAvatar } : undefined}
             title={!displayAvatar ? displayName.substring(0, 2).toUpperCase() : undefined}
             imageProps={{ style: { resizeMode: 'cover' } }}
+            containerStyle={{ backgroundColor: themeColors.tint }} // Fondo del avatar
           />
         </View>
         <View style={styles.infoContainer}>
@@ -61,14 +67,18 @@ export function OfferListItem({ offer }: { offer: Offer }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (themeColors: ThemeColors) => StyleSheet.create({
   card: {
     borderRadius: 16,
     padding: 12,
-    marginHorizontal: 15,
+    marginHorizontal: 0,
+    marginTop: 0,
     marginBottom: 15,
-    backgroundColor: COLORS.white,
-    elevation: 2,
+    backgroundColor: themeColors.card,
+    borderWidth: 1,
+    borderColor: themeColors.border,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   contentContainer: { flexDirection: 'row', alignItems: 'center' },
   avatarContainer: {
@@ -76,7 +86,6 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     marginRight: 12,
-    backgroundColor: COLORS.primary,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
@@ -84,31 +93,35 @@ const styles = StyleSheet.create({
   infoContainer: { flex: 1, justifyContent: 'center' },
   titlePrefix: {
     fontSize: scaleFont(13),
-    color: COLORS.gray,
+    color: themeColors.tabIconDefault,
   },
   title: {
     fontSize: scaleFont(16),
     fontWeight: 'bold',
-    color: COLORS.text,
+    color: themeColors.text,
   },
   subtitle: {
     fontSize: scaleFont(13),
-    color: COLORS.gray,
+    color: themeColors.tabIconDefault,
     marginTop: 4,
     marginBottom: 6,
   },
-  price: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.secondary },
+  price: { 
+    fontSize: scaleFont(16), 
+    fontWeight: 'bold', 
+    color: themeColors.tint 
+  },
   statusBadge: {
     position: 'absolute',
-    top: -12,
-    right: -12,
+    top: -13, // Ajuste para que quede sobre el borde
+    right: -13, // Ajuste para que quede sobre el borde
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderTopRightRadius: 16,
     borderBottomLeftRadius: 12,
   },
   statusText: {
-    color: COLORS.white,
+    color: themes.dark.text, // Texto blanco para contraste con badge
     fontSize: scaleFont(10),
     fontWeight: 'bold',
     textTransform: 'uppercase',

@@ -1,10 +1,10 @@
 // app/(seller)/(pedidos)/order-details/[id].tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, Image, Linking, Platform } from 'react-native';
 import { Card, Icon, Button } from '@rneui/themed';
 import { useLocalSearchParams } from 'expo-router';
 import { OrderService } from '../../../../src/services/order.service';
-import { COLORS } from '../../../../src/constants/colors';
+import { COLORS } from '../../../../constants/Colors';
 import { InfoRow } from '../../../../src/components/InfoRow';
 import { scaleFont } from '../../../../src/utils/responsive';
 import { Order, OfferItem } from '../../../../src/types/entities';
@@ -46,11 +46,14 @@ export default function SellerOrderDetailsScreen() {
     fetchDetails();
   }, [fetchDetails]);
 
-  const handleUpdateStatus = async (newStatus: string) => {
+  const handleDispatch = async () => {
     if (typeof orderId !== 'string') return;
+    const deliveryType = order?.shopping_lists?.delivery_type;
+    const actionText = deliveryType === 'pickup' ? "marcar como listo para recoger" : "despachar para domicilio";
+    
     Alert.alert(
       "Confirmar acción",
-      `¿Estás seguro de que quieres cambiar el estado a "${newStatus}"?`,
+      `¿Estás seguro de que quieres ${actionText}?`,
       [
         { text: "Cancelar", style: "cancel" },
         { 
@@ -58,7 +61,31 @@ export default function SellerOrderDetailsScreen() {
           onPress: async () => {
             try {
               setLoading(true);
-              await OrderService.updateOrderStatus(orderId, newStatus);
+              await OrderService.dispatchOrder(orderId);
+              fetchDetails();
+            } catch (error: any) {
+              Alert.alert("Error", error.message);
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleConfirmPayment = async () => {
+    if (typeof orderId !== 'string') return;
+    Alert.alert(
+      "Confirmar Pago Recibido",
+      "⚠️ IMPORTANTE: Solo pulsa confirmar si YA recibiste el dinero (Nequi, Efectivo, etc). Lizi descontará la comisión de tu billetera ahora.",
+      [
+        { text: "Aún no he recibido", style: "cancel" },
+        { 
+          text: "Confirmar Pago", 
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await OrderService.confirmPayment(orderId);
               fetchDetails();
             } catch (error: any) {
               Alert.alert("Error", error.message);
@@ -74,6 +101,38 @@ export default function SellerOrderDetailsScreen() {
     setRatingModalVisible(false);
     if (submitted) {
       fetchDetails();
+    }
+  };
+
+  const openGps = () => {
+    const lat = listInfo?.latitude;
+    const lng = listInfo?.longitude;
+    if (lat && lng) {
+      const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
+      const latLng = `${lat},${lng}`;
+      const label = 'Destino Entrega';
+      const url = Platform.select({
+        ios: `${scheme}${label}@${latLng}`,
+        android: `${scheme}${latLng}(${label})`
+      });
+      Linking.openURL(url || `https://www.google.com/maps/search/?api=1&query=${latLng}`);
+    } else {
+      Alert.alert("Error", "Coordenadas no disponibles.");
+    }
+  };
+
+  const sendToDriver = () => {
+    const lat = listInfo?.latitude;
+    const lng = listInfo?.longitude;
+    if (lat && lng) {
+        const clientName = order?.buyer_profiles?.nombre || 'Cliente';
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        const message = `Entrega Lizi para ${clientName}.\nUbicación: ${mapUrl}`;
+        const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
+        
+        Linking.openURL(whatsappUrl).catch(() => {
+            Alert.alert("Error", "No se pudo abrir WhatsApp.");
+        });
     }
   };
 
@@ -112,6 +171,31 @@ export default function SellerOrderDetailsScreen() {
         )}
       </Card>
       
+      {listInfo?.delivery_type === 'delivery' && listInfo?.latitude && listInfo?.longitude && (
+        <Card containerStyle={styles.card}>
+            <CardTitle title="Logística de Entrega" iconName="map-marker-radius" />
+            <Card.Divider />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+                <Button
+                    title="Abrir en GPS"
+                    type="outline"
+                    onPress={openGps}
+                    icon={<Icon name="map" type="material-community" size={20} color={COLORS.primary} style={{ marginRight: 8 }} />}
+                    titleStyle={{ color: COLORS.primary }}
+                    buttonStyle={{ borderColor: COLORS.primary }}
+                />
+                <Button
+                    title="Enviar a Conductor"
+                    type="outline"
+                    onPress={sendToDriver}
+                    icon={<Icon name="whatsapp" type="material-community" size={20} color={COLORS.success} style={{ marginRight: 8 }} />}
+                    titleStyle={{ color: COLORS.success }}
+                    buttonStyle={{ borderColor: COLORS.success }}
+                />
+            </View>
+        </Card>
+      )}
+
       <Card containerStyle={styles.card}>
         <CardTitle title="Productos del Pedido" iconName="basket" />
         <Card.Divider />
@@ -141,15 +225,29 @@ export default function SellerOrderDetailsScreen() {
         <Card.Divider />
         {order.status === 'confirmed' && (
            <Button 
-              title="Enviando a destino"
-              onPress={() => handleUpdateStatus('enviado')} 
+              title={order.shopping_lists?.delivery_type === 'pickup' ? "Listo para Recoger 🛍️" : "Enviar Domicilio 🛵"}
+              onPress={handleDispatch} 
               buttonStyle={{backgroundColor: COLORS.accent}}
               titleStyle={{color: COLORS.primary, fontWeight: 'bold'}}
-              icon={<Icon name="send" type="material-community" color={COLORS.primary} containerStyle={{marginRight: 10}} />}
+              icon={<Icon name={order.shopping_lists?.delivery_type === 'pickup' ? "store-check" : "truck-delivery"} type="material-community" color={COLORS.primary} containerStyle={{marginRight: 10}} />}
            />
         )}
-        {order.status === 'enviado' && (
-           <Text style={styles.infoText}>Pedido en camino. Esperando confirmación del comprador.</Text>
+        {(order.status === 'ready_for_pickup' || order.status === 'in_transit') && (
+           <View>
+             <Text style={styles.infoText}>
+               {order.status === 'ready_for_pickup' ? "El cliente ya puede pasar por el pedido." : "El pedido va en camino."}
+             </Text>
+             <Text style={styles.infoText}>Esperando que el comprador confirme recepción.</Text>
+           </View>
+        )}
+        {order.status === 'delivered_pending_confirmation' && (
+          <Button 
+            title="Confirmar Pago Recibido 💵"
+            onPress={handleConfirmPayment}
+            buttonStyle={{backgroundColor: '#4CAF50'}}
+            titleStyle={{color: 'white', fontWeight: 'bold'}}
+            icon={<Icon name="cash-check" type="material-community" color="white" containerStyle={{marginRight: 10}} />}
+          />
         )}
         {order.status === 'completed' && !order.rating_for_buyer && (
            <Button title="Calificar a Comprador" onPress={() => setRatingModalVisible(true)} buttonStyle={{backgroundColor: COLORS.accent}} titleStyle={{color: COLORS.primary, fontWeight: 'bold'}} />

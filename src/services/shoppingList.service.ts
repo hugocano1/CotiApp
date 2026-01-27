@@ -115,7 +115,13 @@ export class ShoppingListService {
 
   static async acceptOffer(offerId: string, listId: string) {
     const { error } = await supabase.rpc('accept_offer', { offer_id_to_accept: offerId, list_id_to_close: listId });
-    if (error) { console.error("Error accepting offer:", error); throw new Error(error.message); }
+    if (error) { 
+      console.error("Error accepting offer:", error); 
+      if (error.message.includes('requisitos')) {
+        throw new Error('Esta oferta ya no está disponible (El vendedor no cumple los requisitos financieros).');
+      }
+      throw new Error(error.message); 
+    }
     return { success: true };
   }
 
@@ -150,13 +156,17 @@ export class ShoppingListService {
     // Preparamos los artículos para el formato JSON que espera la función RPC.
     // Aquí revertimos el workaround del `__ID__` que se añade en el cliente.
     const itemsForRpc = data.items.map(item => {
-      const parts = item.item_name.split('__ID__');
-      if (parts.length !== 2) {
+      // El payload de item.item_name es "Name__ID__uuid__IMG__url" o "Name__ID__uuid"
+      const idPayload = item.item_name.split('__ID__')[1];
+      if (!idPayload) {
         throw new Error(`ID del artículo de la lista no encontrado en el nombre: "${item.item_name}"`);
       }
+      
+      const cleanItemId = idPayload.split('__IMG__')[0]; // Extrae solo el UUID
+
       return {
-        item_name: parts[0], // Nombre real
-        list_item_id: parts[1], // ID del artículo de la lista original
+        item_name: item.item_name, // Mantenemos el payload completo para que se guarde en offer_items.item_name
+        list_item_id: cleanItemId, // Pasamos el UUID limpio que la función RPC espera
         quantity: item.quantity,
         unit: item.unit,
         brand: item.brand,
@@ -174,6 +184,9 @@ export class ShoppingListService {
 
     if (error) {
       console.error('Error calling create_offer_and_notify RPC:', error);
+      if (error.message.includes('SALDO_INSUFICIENTE')) {
+        throw new Error('Saldo insuficiente en tu Billetera Lizi. Por favor recarga para ofertar.');
+      }
       throw new Error(`No se pudo crear la oferta: ${error.message}`);
     }
 

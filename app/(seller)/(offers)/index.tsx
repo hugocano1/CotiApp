@@ -2,13 +2,16 @@
 import React from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { Link } from 'expo-router';
-import { COLORS } from '../../../src/constants/colors';
+import themes, { COLORS } from '../../../constants/Colors';
 import { useSellerOffers } from '../../../src/hooks/useSellerOffers';
 import { OfferListItem } from '../../../src/components/OfferListItem';
 import { scaleFont } from '../../../src/utils/responsive';
+import { useColorScheme } from '../../../components/useColorScheme';
 
 export default function MisOfertasScreen() {
   const { offers, loading, refresh } = useSellerOffers();
+  const colorScheme = useColorScheme();
+  const themeColors = themes[colorScheme ?? 'light'];
 
   if (loading) {
     return <ActivityIndicator size="large" style={styles.centered} color={COLORS.primary} />;
@@ -28,7 +31,7 @@ export default function MisOfertasScreen() {
           asChild
         >
           <TouchableOpacity>
-            <OfferListItem offer={item} />
+            <OfferListItem offer={item} themeColors={themeColors} />
           </TouchableOpacity>
         </Link>
       )}

@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
 import { Avatar, Card, Icon, Button } from '@rneui/themed';
+import { useRouter } from 'expo-router'; // ✅ IMPORTADO
 import { useAuth } from '../../src/hooks/useAuth';
 import { useUserProfile } from '../../src/hooks/useUserProfile';
 import { supabase } from '../../src/services/auth/config/supabaseClient';
 import { StorageService } from '../../src/services/storage.service';
-import { COLORS } from '../../src/constants/colors';
+import { COLORS } from '../../constants/Colors';
 import * as ImagePicker from 'expo-image-picker';
 import { scaleFont } from '../../src/utils/responsive';
 import { SellerProfile } from '../../src/types/entities';
@@ -37,6 +38,7 @@ const EditableInfoItem = ({ label, value, onChangeText }: EditableInfoItemProps)
 
 export default function SellerProfileScreen() {
     const { session } = useAuth();
+    const router = useRouter(); // ✅ INICIALIZADO
     const { profile, role, loading, refreshProfile } = useUserProfile();
     
     const [editMode, setEditMode] = useState(false);
@@ -192,6 +194,22 @@ export default function SellerProfileScreen() {
                     <InfoItem icon="account-outline" text="Nombre del Vendedor" value={sellerName} />
                     <InfoItem icon="email-outline" text="Correo Electrónico" value={session?.user?.email || 'No disponible'} />
                 </Card>
+
+                {/* --- Acceso Directo a Billetera --- */}
+                {!editMode && (
+                  <View style={styles.buttonSection}>
+                    <TouchableOpacity 
+                        style={styles.walletButton} 
+                        onPress={() => router.push('/(seller)/wallet')}
+                    >
+                        <View style={styles.walletContent}>
+                            <Icon name="wallet" type="material-community" color="white" size={24} />
+                            <Text style={styles.walletText}>Mi Billetera Lizi</Text>
+                        </View>
+                        <Icon name="chevron-right" type="material-community" color="white" size={24} />
+                    </TouchableOpacity>
+                  </View>
+                )}
                 
                 <View style={styles.buttonSection}>
                     {editMode ? (
@@ -213,23 +231,39 @@ export default function SellerProfileScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f4f6f8' },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    banner: { height: 200, justifyContent: 'center', alignItems: 'center' },
+    banner: { height: 160, justifyContent: 'center', alignItems: 'center' },
     editBannerButton: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.5)', padding: 8, borderRadius: 20 },
-    headerContent: { alignItems: 'center', marginTop: -60 },
+    headerContent: { alignItems: 'center', marginTop: -50 },
     avatarContainer: { borderWidth: 4, borderColor: 'white', borderRadius: 64, backgroundColor: '#e1e1e1' },
     editIconContainer: { position: 'absolute', bottom: 0, right: 0, backgroundColor: COLORS.secondary, padding: 8, borderRadius: 20, borderWidth: 2, borderColor: 'white' },
-    storeName: { fontSize: scaleFont(26), fontWeight: 'bold', color: COLORS.primary, marginTop: 12 },
+    storeName: { fontSize: scaleFont(22), fontWeight: 'bold', color: COLORS.primary, marginTop: 8 },
     ratingContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
     ratingText: { fontSize: scaleFont(16), color: COLORS.text, opacity: 0.8, marginLeft: 5 },
-    storeDescription: { textAlign: 'center', color: COLORS.text, fontSize: scaleFont(16), padding: 10 },
-    card: { borderRadius: 12, marginHorizontal: 15, marginBottom: 15, padding: 15 },
-    infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+    storeDescription: { textAlign: 'center', color: COLORS.text, fontSize: scaleFont(14), paddingHorizontal: 10, paddingVertical: 5 },
+    card: { borderRadius: 12, marginHorizontal: 15, marginBottom: 10, padding: 12 },
+    infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
     infoCol: { marginLeft: 15, flex: 1 },
-    infoLabel: { color: COLORS.gray, fontSize: scaleFont(12), textTransform: 'uppercase' },
-    infoValue: { color: COLORS.text, fontSize: scaleFont(16), fontWeight: '500' },
+    infoLabel: { color: COLORS.gray, fontSize: scaleFont(11), textTransform: 'uppercase' },
+    infoValue: { color: COLORS.text, fontSize: scaleFont(15), fontWeight: '500' },
     editableRow: { paddingVertical: 10 },
     editableLabel: { color: COLORS.primary, fontSize: scaleFont(14), fontWeight: '600', marginBottom: 5 },
     infoInput: { fontSize: scaleFont(16), borderBottomWidth: 1, borderBottomColor: COLORS.gray, paddingVertical: 8 },
-    buttonSection: { paddingHorizontal: 20, marginTop: 10, marginBottom: 10 },
+    buttonSection: { paddingHorizontal: 20, marginTop: 5, marginBottom: 5 },
     logoutButtonTitle: { color: COLORS.danger, fontWeight: 'bold', padding: 20 },
+    walletButton: {
+        backgroundColor: COLORS.primary,
+        borderRadius: 12,
+        padding: 16,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+        elevation: 3,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    walletContent: { flexDirection: 'row', alignItems: 'center' },
+    walletText: { color: 'white', fontSize: scaleFont(16), fontWeight: 'bold', marginLeft: 12 },
 });

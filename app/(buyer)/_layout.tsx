@@ -2,29 +2,13 @@
 import React from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Icon } from '@rneui/themed';
-import { COLORS } from '../../src/constants/colors';
-// ✅ CORRECCIÓN: Importaciones movidas al principio del archivo
 import { TouchableOpacity, StyleSheet } from 'react-native';
 
+import { COLORS } from '../../constants/Colors';
 import { useUnreadNotifications } from '../../src/hooks/useUnreadNotifications';
 
-// ✅ CORRECCIÓN: Definición de estilos movida antes de ser usada
-const styles = StyleSheet.create({
-  createButtonTab: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.secondary, // Usamos el color de acción
-    borderRadius: 30,
-    marginHorizontal: 5,
-    marginVertical: 5,
-    height: 40,
-    elevation: 3,
-  },
-});
-
 // Componente para el ícono de la campana que se actualiza
-const NotificationIcon = () => {
+const NotificationIcon = ({ color }: { color: string }) => {
   const router = useRouter();
   const { unreadCount } = useUnreadNotifications();
 
@@ -34,9 +18,9 @@ const NotificationIcon = () => {
       style={{ marginRight: 15 }}
     >
       <Icon 
-        name={unreadCount > 0 ? 'bell' : 'bell-outline'} 
+        name={unreadCount > 0 ? 'bell-badge' : 'bell-outline'} 
         type="material-community" 
-        color={COLORS.primary} 
+        color={color} 
       />
     </TouchableOpacity>
   );
@@ -44,31 +28,47 @@ const NotificationIcon = () => {
 
 export default function BuyerTabLayout() {
   const router = useRouter();
+  // Los estilos ahora usan el objeto plano COLORS directamente.
+  const styles = createStyles(COLORS);
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: COLORS.primary,
-        headerShown: false, // Ocultamos todos los headers por defecto
+        tabBarInactiveTintColor: COLORS.gray,
+        tabBarStyle: {
+          backgroundColor: COLORS.white,
+          borderTopColor: COLORS.border,
+        },
+        headerStyle: {
+          backgroundColor: COLORS.secondary, // Mapeado a liziDark
+          borderBottomWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        headerTitleStyle: {
+          color: COLORS.white,
+        },
+        headerTintColor: COLORS.white,
+        headerShown: false, 
       }}
     >
       <Tabs.Screen 
         name="index" 
         options={{ 
           title: 'Resumen', 
-          headerShown: true, // Mostramos explícitamente el header para esta pantalla
-          tabBarIcon: ({ color }) => <Icon name="home" type="material-community" color={color} />, 
-          headerRight: () => <NotificationIcon />,
+          headerShown: true,
+          tabBarIcon: ({ color }) => <Icon name="home-variant-outline" type="material-community" color={color} />, 
+          headerRight: () => <NotificationIcon color={COLORS.white} />,
         }} 
       />
       
-      {/* ✅ CORRECCIÓN CLAVE: Nos aseguramos de que el header de la pestaña esté oculto */}
       <Tabs.Screen 
         name="(mis-listas)" 
         options={{ 
           title: 'Mis Listas', 
           headerShown: false, 
-          unmountOnBlur: true, // This will reset the stack on tab press
+          unmountOnBlur: true,
           tabBarIcon: ({ color }) => <Icon name="format-list-bulleted" type="material-community" color={color} /> 
         }} 
       />
@@ -78,17 +78,17 @@ export default function BuyerTabLayout() {
         options={{ 
           title: 'Crear Lista', 
           headerShown: true, 
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ focused }) => (
             <Icon 
-              name="playlist-plus" 
+              name="plus" 
               type="material-community" 
-              color={focused ? COLORS.white : color}
+              color={COLORS.white} // El ícono es siempre blanco sobre el fondo de acento
             />
           ),
           tabBarButton: (props) => (
             <TouchableOpacity {...props} style={styles.createButtonTab} />
           ),
-          tabBarLabelStyle: { color: COLORS.white, fontWeight: 'bold' },
+          tabBarLabelStyle: { display: 'none' }, // Opcional: Ocultar el label para dar más espacio
         }} 
       />
 
@@ -97,7 +97,7 @@ export default function BuyerTabLayout() {
         options={{ 
           title: 'Mis Pedidos', 
           headerShown: false, 
-          unmountOnBlur: true, // This will reset the stack on tab press
+          unmountOnBlur: true,
           tabBarIcon: ({ color }) => <Icon name="receipt" type="material-community" color={color} /> 
         }} 
         listeners={({ navigation }) => ({
@@ -110,9 +110,7 @@ export default function BuyerTabLayout() {
       <Tabs.Screen
         name="notifications"
         options={{
-          // Oculta esta ruta de la barra de pestañas
           href: null,
-          // La presenta como un modal
           presentation: 'modal',
           headerShown: true,
           headerTitle: 'Notificaciones',
@@ -123,11 +121,27 @@ export default function BuyerTabLayout() {
         options={{ 
           title: 'Perfil', 
           headerShown: true, 
-          headerStyle: { backgroundColor: COLORS.primary }, 
-          headerTintColor: COLORS.white, 
-          tabBarIcon: ({ color }) => <Icon name="account" type="material-community" color={color} /> 
+          tabBarIcon: ({ color }) => <Icon name="account-outline" type="material-community" color={color} /> 
         }} 
       />
     </Tabs>
   );
 }
+
+const createStyles = (colors: typeof COLORS) => StyleSheet.create({
+  createButtonTab: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.primary, // Usar el color primario (liziBrand)
+    borderRadius: 30,
+    marginHorizontal: 5,
+    marginVertical: 5,
+    height: 40,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+});

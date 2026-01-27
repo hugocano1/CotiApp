@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { COLORS } from '../../src/constants/colors';
+import { COLORS } from '../../constants/Colors';
 import { scaleFont } from '../../src/utils/responsive';
 import { useNotificationsList } from '../../src/hooks/useNotificationsList';
 import { Icon } from '@rneui/themed';

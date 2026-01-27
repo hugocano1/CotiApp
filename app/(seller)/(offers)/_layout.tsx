@@ -1,6 +1,6 @@
 // app/(seller)/(offers)/_layout.tsx
 import { Stack } from 'expo-router';
-import { COLORS } from '../../../src/constants/colors';
+import { COLORS } from '../../../constants/Colors';
 
 export default function OffersLayout() {
   return (

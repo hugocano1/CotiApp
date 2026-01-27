@@ -3,7 +3,7 @@ import React, { useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import { Button, Icon } from '@rneui/themed';
 import { useRouter, useNavigation } from 'expo-router';
-import { COLORS } from '../../src/constants/colors';
+import { COLORS } from '../../constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useShoppingLists } from '../../src/hooks/useShoppingLists';
 import { useBuyerOrders } from '../../src/hooks/useBuyerOrders';

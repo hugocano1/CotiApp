@@ -6,7 +6,7 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { useUserProfile } from '../../src/hooks/useUserProfile';
 import { supabase } from '../../src/services/auth/config/supabaseClient';
 import { StorageService } from '../../src/services/storage.service';
-import { COLORS } from '../../src/constants/colors';
+import { COLORS } from '../../constants/Colors';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { scaleFont } from '../../src/utils/responsive';

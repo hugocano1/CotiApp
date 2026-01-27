@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Card, Button, Icon } from '@rneui/themed';
 import { useListOffers } from '../../../../src/hooks/useListOffers';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
-import { COLORS } from '../../../../src/constants/colors';
+import { COLORS } from '../../../../constants/Colors';
 import { scaleFont } from '../../../../src/utils/responsive';
 import { Offer } from '../../../../src/types/entities';
 import { formatCurrency } from '../../../../src/utils/formatters';

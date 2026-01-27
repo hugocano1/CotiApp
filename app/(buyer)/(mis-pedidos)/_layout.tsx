@@ -1,6 +1,6 @@
 // app/(buyer)/(mis-pedidos)/_layout.tsx
 import { Stack, useRouter } from 'expo-router';
-import { COLORS } from '../../../src/constants/colors';
+import { COLORS } from '../../../constants/Colors';
 import { TouchableOpacity } from 'react-native';
 import { Icon } from '@rneui/themed';
 

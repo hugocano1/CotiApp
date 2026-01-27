@@ -2,17 +2,66 @@
 import React from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Icon } from '@rneui/themed';
-import { COLORS } from '../../src/constants/colors';
 import { TouchableOpacity, StyleSheet } from 'react-native';
+
+import { useColorScheme } from '../../components/useColorScheme';
+import Colors from '../../constants/Colors';
+// Placeholder for notification hook - assuming it will be created for seller too
+// import { useUnreadNotifications } from '../../src/hooks/useUnreadNotifications';
+
+type ThemeColors = typeof Colors.light;
+
+// Componente para el ícono de la campana
+const NotificationIcon = ({ color }: { color: string }) => {
+  const router = useRouter();
+  // const { unreadCount } = useUnreadNotifications(); // Placeholder
+  const unreadCount = 0; // Placeholder value
+
+  return (
+    <TouchableOpacity
+      onPress={() => router.push('/(seller)/notifications')}
+      style={{ marginRight: 15 }}
+    >
+      <Icon 
+        name={unreadCount > 0 ? 'bell' : 'bell-outline'} 
+        type="material-community" 
+        color={color} 
+      />
+    </TouchableOpacity>
+  );
+};
 
 export default function SellerTabLayout() {
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const themeColors = Colors[colorScheme ?? 'light'];
+
+  const styles = createStyles(themeColors);
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: COLORS.primary,
-        headerShown: false,
+        tabBarActiveTintColor: themeColors.tint,
+        tabBarInactiveTintColor: Colors.light.tabIconDefault,
+        tabBarStyle: {
+          backgroundColor: themeColors.card,
+          borderTopColor: themeColors.border,
+        },
+        // ==================================================
+        // Aplicación del Nuevo Sistema de Diseño al Header
+        // ==================================================
+        headerStyle: {
+          backgroundColor: Colors.dark.background, // <- LiziDark
+          borderBottomWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        headerTitleStyle: {
+          color: Colors.dark.text, // Blanco
+          fontWeight: 'bold',
+        },
+        headerTintColor: Colors.dark.text, // Blanco para botón de atrás y título
+        headerShown: false, // Ocultar por defecto, mostrar en cada screen que lo necesite
       }}
     >
       <Tabs.Screen 
@@ -20,39 +69,77 @@ export default function SellerTabLayout() {
         options={{ 
           title: 'Resumen', 
           headerShown: true, 
-          headerStyle: { backgroundColor: COLORS.primary },
-          headerTintColor: COLORS.white,
-          tabBarIcon: ({ color }) => <Icon name="home" type="material-community" color={color} />,
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => router.push('/(seller)/notifications')}
-              style={{ marginRight: 15 }}
-            >
-              <Icon name="bell-outline" type="material-community" color={COLORS.white} />
-            </TouchableOpacity>
-          ),
+          tabBarIcon: ({ color }) => <Icon name="home-variant-outline" type="material-community" color={color} />,
+          headerRight: () => <NotificationIcon color={Colors.dark.text} />,
         }} 
       />
-      {/* ... El resto de tus Tabs.Screen se mantienen igual ... */}
-      <Tabs.Screen name="(listas)" options={{ title: 'Listas', tabBarIcon: ({ color, focused }) => ( <Icon name="view-list" type="material-community" color={focused ? COLORS.white : color} /> ), tabBarButton: (props) => ( <TouchableOpacity {...props} style={styles.mainButtonTab} /> ), tabBarLabelStyle: { color: COLORS.white, fontWeight: 'bold' }, }} />
-      <Tabs.Screen name="(offers)" options={{ title: 'Mis Ofertas', tabBarIcon: ({ color }) => <Icon name="tag" type="material-community" color={color} /> }} />
-      <Tabs.Screen name="(pedidos)" options={{ title: 'Mis Pedidos', tabBarIcon: ({ color }) => <Icon name="receipt" type="material-community" color={color} /> }} />
+      <Tabs.Screen 
+        name="(listas)" 
+        options={{ 
+          title: 'Listas', 
+          headerShown: false,
+          tabBarIcon: ({ focused }) => ( <Icon name="view-list-outline" type="material-community" color={focused ? Colors.dark.text : Colors.light.tabIconDefault} /> ), 
+          tabBarButton: (props) => ( <TouchableOpacity {...props} style={styles.mainButtonTab} /> ), 
+          tabBarLabelStyle: { color: Colors.dark.text, fontWeight: 'bold' }, 
+        }} 
+      />
+      <Tabs.Screen 
+        name="(offers)" 
+        options={{ 
+          title: 'Mis Ofertas', 
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Icon name="tag-multiple-outline" type="material-community" color={color} /> 
+        }} 
+      />
+      <Tabs.Screen 
+        name="(pedidos)" 
+        options={{ 
+          title: 'Mis Pedidos', 
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Icon name="receipt" type="material-community" color={color} /> 
+        }} 
+      />
       <Tabs.Screen
         name="notifications"
         options={{
           href: null,
-          presentation: 'modal',
           headerShown: true,
           headerTitle: 'Notificaciones',
-          headerStyle: { backgroundColor: COLORS.primary },
-          headerTintColor: COLORS.white,
         }}
       />
-      <Tabs.Screen name="perfil" options={{ title: 'Perfil', headerShown: true, headerStyle: { backgroundColor: COLORS.primary }, headerTintColor: COLORS.white, tabBarIcon: ({ color }) => <Icon name="account" type="material-community" color={color} /> }} />
+      <Tabs.Screen 
+        name="wallet" 
+        options={{ 
+          href: null, // Ocultar del menú inferior
+          headerShown: false, // El header lo maneja la propia pantalla con Stack.Screen
+        }} 
+      />
+      <Tabs.Screen 
+        name="perfil" 
+        options={{ 
+          title: 'Perfil', 
+          headerShown: true, 
+          tabBarIcon: ({ color }) => <Icon name="account-outline" type="material-community" color={color} /> 
+        }} 
+      />
     </Tabs>
   );
 }
 
-const styles = StyleSheet.create({
-  mainButtonTab: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.secondary, borderRadius: 30, marginHorizontal: 5, marginVertical: 5, height: 40, elevation: 3 },
+const createStyles = (themeColors: ThemeColors) => StyleSheet.create({
+  mainButtonTab: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: themeColors.tint, 
+    borderRadius: 30, 
+    marginHorizontal: 5, 
+    marginVertical: 5, 
+    height: 40, 
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
 });

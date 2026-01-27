@@ -13,8 +13,8 @@ export class OrderService {
       .select<string, Order>(
         `
         *,
-        items,
-        shopping_lists ( title, delivery_date, delivery_type, delivery_address_text ),
+        items:offer_items (*),
+        shopping_lists ( title, delivery_date, delivery_type, delivery_address_text, latitude, longitude ),
         buyer_profiles:buyer_id ( nombre, apellido ),
         seller_profiles:seller_id ( nombre, stores ( name ) )
       `
@@ -31,16 +31,16 @@ export class OrderService {
   }
 
   /**
-   * Llama a la función RPC para actualizar el estado de un pedido.
+   * Llama al RPC para despachar un pedido.
+   * La lógica interna de la BD decidirá si es 'ready_for_pickup' o 'in_transit'.
    */
-  static async updateOrderStatus(orderId: string, newStatus: string) {
-    const { error } = await supabase.rpc('update_order_status', {
-      order_id_to_update: orderId,
-      new_status: newStatus,
+  static async dispatchOrder(orderId: string) {
+    const { error } = await supabase.rpc('seller_dispatch_order', {
+      order_id_param: orderId,
     });
 
     if (error) {
-      console.error("Error updating order status:", error);
+      console.error("Error dispatching order:", error);
       throw new Error(error.message);
     }
 
@@ -48,20 +48,45 @@ export class OrderService {
   }
 
   /**
-   * Llama a la función RPC para que el comprador confirme la entrega
-   * y marque el pedido como completado.
+   * Llama al RPC para que el comprador confirme la recepción del pedido.
+   * Cambia el estado a 'delivered_pending_confirmation'.
    */
-  static async confirmDelivery(orderId: string) {
-    const { error } = await supabase.rpc('confirm_delivery', {
-      order_id_to_complete: orderId,
+  static async confirmReceipt(orderId: string) {
+    const { error } = await supabase.rpc('buyer_confirm_receipt', {
+      order_id_param: orderId,
     });
 
     if (error) {
-      console.error("Error confirming delivery:", error);
+      console.error("Error confirming receipt:", error);
       throw new Error(error.message);
     }
 
     return { success: true };
+  }
+
+  /**
+   * Llama al RPC para que el vendedor confirme el pago y finalice el ciclo.
+   * Esto descuenta la comisión de la billetera y pone el estado en 'completed'.
+   */
+  static async confirmPayment(orderId: string) {
+    const { error } = await supabase.rpc('seller_confirm_payment', {
+      order_id_param: orderId,
+    });
+
+    if (error) {
+      console.error("Error confirming payment:", error);
+      throw new Error(error.message);
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * Llama a la función RPC para que el comprador marque el pedido como completado.
+   * @deprecated Usar confirmReceipt y luego el vendedor confirmPayment.
+   */
+  static async confirmDelivery(orderId: string) {
+    return this.confirmReceipt(orderId);
   }
 
   static async submitRating(orderId: string, ratingValue: number) {

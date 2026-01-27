@@ -124,22 +124,55 @@ export interface ShoppingList {
 }
 
 /**
+ * Represents a seller's wallet for the prepay model.
+ */
+export interface SellerWallet {
+  id: string;
+  seller_id: string;
+  balance: number;
+  frozen_balance: number;
+  status?: string; // e.g., 'active', 'suspended'
+  updated_at: string;
+}
+
+/**
+ * Represents a transaction in the seller's wallet.
+ */
+export interface WalletTransaction {
+  id: string;
+  wallet_id: string;
+  order_id?: string;
+  amount: number;
+  transaction_type: 'commission' | 'top_up' | 'refund' | 'adjustment';
+  description?: string;
+  created_at: string;
+}
+
+/**
  * Represents a final order created after an offer is accepted.
  */
 export interface Order {
   id: string;
   total_price: number;
-  status: 'confirmed' | 'enviado' | 'completed';
+  status: 'confirmed' | 'ready_for_pickup' | 'in_transit' | 'delivered_pending_confirmation' | 'completed' | 'cancelled';
   created_at: string; // ISO date string
   pickup_code?: string; // ✅ AÑADIDO
   items: OfferItem[]; // Los artículos de la oferta que se convirtió en pedido
   shopping_list_id: string;
-  shopping_lists?: ShoppingList; // The original shopping list
+  shopping_lists?: {
+    title: string;
+    delivery_date: string;
+    delivery_type: 'pickup' | 'delivery';
+    delivery_address_text?: string;
+    latitude?: number;
+    longitude?: number;
+  };
   seller_id: string;
   seller_profiles?: SellerProfile; // The seller involved in the order
   buyer_id: string;
   buyer_profiles?: BuyerProfile; // The buyer involved in the order
   rating_for_seller?: number;
+  commission_amount?: number;
 }
 
 /**

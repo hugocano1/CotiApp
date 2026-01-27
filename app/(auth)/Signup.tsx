@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, TextInput, Alert, ActivityIndicator, Text, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Link } from 'expo-router';
 import { AuthService } from '../../src/services/auth/auth.service';
-import { COLORS } from '../../src/constants/colors';
+import { COLORS } from '../../constants/Colors';
 import { scaleFont } from '../../src/utils/responsive';
 
 // Regex for password strength
