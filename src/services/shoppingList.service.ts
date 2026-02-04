@@ -113,8 +113,12 @@ export class ShoppingListService {
     return data || [];
   }
 
-  static async acceptOffer(offerId: string, listId: string) {
-    const { error } = await supabase.rpc('accept_offer', { offer_id_to_accept: offerId, list_id_to_close: listId });
+  static async acceptOffer(offerId: string, listId: string, paymentMethod: string = 'transferencia_anticipada') {
+    const { error } = await supabase.rpc('accept_offer', { 
+      offer_id_to_accept: offerId, 
+      list_id_to_close: listId,
+      p_payment_method: paymentMethod
+    });
     if (error) { 
       console.error("Error accepting offer:", error); 
       if (error.message.includes('requisitos')) {

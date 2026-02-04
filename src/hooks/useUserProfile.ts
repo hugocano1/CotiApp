@@ -33,7 +33,7 @@ export function useUserProfile() {
           .from('buyer_profiles')
           .select<`*`>('*') // Using Supabase generics
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
         if (error) throw error;
         profileData = data;
       } else if (userRole === 'seller') {
@@ -41,7 +41,7 @@ export function useUserProfile() {
           .from('seller_profiles')
           .select<`*, stores(*)`>('*, stores(*)') // Using Supabase generics
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
         if (error) throw error;
         profileData = data;
       }

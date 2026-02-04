@@ -10,7 +10,7 @@ import { formatCurrency } from '../utils/formatters';
 
 type ThemeColors = typeof themes.light;
 
-export function OfferListItem({ offer, themeColors }: { offer: Offer, themeColors: ThemeColors }) {
+export function OfferListItem({ offer, themeColors, isReceived = false }: { offer: Offer, themeColors: ThemeColors, isReceived?: boolean }) {
   const styles = createStyles(themeColors);
 
   const statusConfig = {
@@ -30,7 +30,7 @@ export function OfferListItem({ offer, themeColors }: { offer: Offer, themeColor
     statusConfig[offer.status as keyof typeof statusConfig] || statusConfig.default;
 
   return (
-    <Card containerStyle={styles.card}>
+    <Card containerStyle={[styles.card, isReceived && styles.receivedCard]}>
       <View style={styles.contentContainer}>
         <View style={styles.avatarContainer}>
           <Avatar
@@ -79,6 +79,16 @@ const createStyles = (themeColors: ThemeColors) => StyleSheet.create({
     borderColor: themeColors.border,
     elevation: 0,
     shadowOpacity: 0,
+  },
+  receivedCard: {
+    backgroundColor: '#FFFDE7', // Un amarillo muy suave
+    borderColor: '#FBC02D', // Amarillo/Dorado más fuerte
+    borderWidth: 1.5,
+    elevation: 4,
+    shadowColor: '#FBC02D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   contentContainer: { flexDirection: 'row', alignItems: 'center' },
   avatarContainer: {

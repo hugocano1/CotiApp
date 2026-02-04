@@ -10,10 +10,12 @@ export class OrderService {
   static async getOrderDetails(orderId: string): Promise<Order | null> {
     const { data, error } = await supabase
       .from('orders')
-      .select<string, Order>(
+      .select(
         `
         *,
-        items:offer_items (*),
+        offer:offers (
+          offer_items (*)
+        ),
         shopping_lists ( title, delivery_date, delivery_type, delivery_address_text, latitude, longitude ),
         buyer_profiles:buyer_id ( nombre, apellido ),
         seller_profiles:seller_id ( nombre, stores ( name ) )
@@ -27,7 +29,16 @@ export class OrderService {
       throw new Error(error.message);
     }
 
-    return data;
+    // Map the nested offer_items to the top-level items property
+    const orderData = data as any;
+    const items = orderData.offer?.offer_items || [];
+    
+    const order: Order = {
+      ...orderData,
+      items: items,
+    };
+
+    return order;
   }
 
   /**

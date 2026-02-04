@@ -1,7 +1,7 @@
 // app/(seller)/(offers)/offer-details/[id].tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, Image } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Card, Icon } from '@rneui/themed';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
 import { COLORS } from '../../../../constants/Colors';
@@ -49,6 +49,7 @@ const CardTitle = ({ title, iconName }: { title: string, iconName?: string }) =>
 
 export default function OfferDetailsScreen() {
   const { id: offerId } = useLocalSearchParams();
+  const router = useRouter();
   const [details, setDetails] = useState<Offer | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -91,6 +92,20 @@ export default function OfferDetailsScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <Stack.Screen 
+        options={{
+          headerLeft: () => (
+            <Icon 
+              name="arrow-left" 
+              type="material-community" 
+              color={COLORS.white} 
+              size={24} 
+              containerStyle={{ marginRight: 20 }}
+              onPress={() => router.canGoBack() ? router.back() : router.replace('/(seller)/(offers)')} 
+            />
+          ),
+        }} 
+      />
       {/* Card 1: MORE Compact Header Info */}
       <Card containerStyle={styles.compactCard}>
         <View style={styles.headerContainer}>

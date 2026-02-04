@@ -16,7 +16,7 @@ export const StatusDisplay = ({ status }: { status: string }) => {
         confirmed: { text: 'Por Despachar', color: themeColors.tint, icon: 'package-variant' }, 
         ready_for_pickup: { text: 'Listo para Recoger', color: themeColors.tint, icon: 'store-clock' },
         in_transit: { text: 'En Camino', color: themeColors.tint, icon: 'truck-delivery' },
-        delivered_pending_confirmation: { text: 'Recibido (Pendiente Pago)', color: '#FF9800', icon: 'cash-clock' },
+        delivered_pending_confirmation: { text: 'Recibido (Pendiente Pago)', color: '#FF9800', icon: 'currency-usd' },
         completed: { text: 'Completado', color: '#4CAF50', icon: 'check-circle' },
         cancelled: { text: 'Cancelado', color: '#F44336', icon: 'close-circle' },
         // Usamos un gris para estados desconocidos o por defecto

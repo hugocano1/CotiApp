@@ -187,7 +187,7 @@ export default function CreateListScreen() {
             {items.map((item) => (
                 <View key={item.id} style={styles.itemRow}>
                     <View style={styles.itemImageContainer}>
-                      {item.image_url ? (
+                      {item.image_url && item.image_url !== 'null' ? (
                         <Image source={{ uri: item.image_url }} style={styles.itemImage} />
                       ) : (
                         <TouchableOpacity style={styles.cameraButton} onPress={() => handleItemImage(item.id)} disabled={isUploadingImage}>

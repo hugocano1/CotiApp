@@ -9,7 +9,7 @@ import { ButtonGroup } from '@rneui/themed';
 import { scaleFont } from '../../../src/utils/responsive';
 
 const FILTERS = {
-  'En Curso': ['confirmed', 'enviado'],
+  'En Curso': ['confirmed', 'ready_for_pickup', 'in_transit', 'delivered_pending_confirmation'],
   'Completados': ['completed'],
 };
 const TABS = Object.keys(FILTERS);

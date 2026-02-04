@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, Image, Linking, Platform } from 'react-native';
 import { Card, Icon, Button } from '@rneui/themed';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { OrderService } from '../../../../src/services/order.service';
 import { COLORS } from '../../../../constants/Colors';
 import { InfoRow } from '../../../../src/components/InfoRow';
@@ -25,6 +25,7 @@ const parseItemName = (itemName: string) => {
 
 export default function SellerOrderDetailsScreen() {
   const { id: orderId } = useLocalSearchParams();
+  const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRatingModalVisible, setRatingModalVisible] = useState(false);
@@ -153,6 +154,23 @@ export default function SellerOrderDetailsScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      {/* ✅ NAVEGACIÓN SEGURA CON BOTÓN ATRÁS */}
+      <Stack.Screen 
+        options={{
+          headerLeft: () => (
+            <Icon 
+              name="arrow-left" 
+              type="material-community" 
+              color={COLORS.white} 
+              size={24} 
+              containerStyle={{ marginRight: 20 }}
+              onPress={() => router.navigate('/(seller)/(pedidos)')} 
+            />
+          ),
+          title: "Detalle del Pedido"
+        }} 
+      />
+
       <Card containerStyle={styles.card}>
         <View style={styles.headerContainer}>
             <Text style={styles.headerTitle}>Pedido de: {order.buyer_profiles?.nombre || 'Comprador'}</Text>
@@ -240,11 +258,12 @@ export default function SellerOrderDetailsScreen() {
              <Text style={styles.infoText}>Esperando que el comprador confirme recepción.</Text>
            </View>
         )}
-        {order.status === 'delivered_pending_confirmation' && (
+        {/* ✅ PERMITIR CONFIRMAR PAGO SI ESTÁ LISTO PARA RECOGER O YA RECIBIDO */}
+        {(order.status === 'delivered_pending_confirmation' || order.status === 'ready_for_pickup') && (
           <Button 
             title="Confirmar Pago Recibido 💵"
             onPress={handleConfirmPayment}
-            buttonStyle={{backgroundColor: '#4CAF50'}}
+            buttonStyle={{backgroundColor: '#4CAF50', marginTop: 10}}
             titleStyle={{color: 'white', fontWeight: 'bold'}}
             icon={<Icon name="cash-check" type="material-community" color="white" containerStyle={{marginRight: 10}} />}
           />

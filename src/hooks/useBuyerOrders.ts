@@ -33,10 +33,10 @@ export function useBuyerOrders(statusFilter: 'active' | 'history' | 'enviado' | 
       if (statusFilter) {
         const statuses =
           statusFilter === 'active'
-            ? ['confirmed', 'enviado']
+            ? ['confirmed', 'ready_for_pickup', 'in_transit', 'delivered_pending_confirmation']
             : statusFilter === 'enviado'
-            ? ['enviado']
-            : ['completed'];
+            ? ['confirmed', 'ready_for_pickup', 'in_transit', 'delivered_pending_confirmation']
+            : ['completed', 'cancelled'];
         query = query.in('status', statuses);
       }
 

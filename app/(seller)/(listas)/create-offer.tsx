@@ -22,7 +22,7 @@ const ImageZoomModal = ({ visible, imageUrl, onClose }: { visible: boolean; imag
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                     <Icon name="close" type="material-community" color={Colors.dark.text} size={32} />
                 </TouchableOpacity>
-                {imageUrl && <Image source={{ uri: imageUrl }} style={styles.enlargedImage} resizeMode="contain" />}
+                {imageUrl && imageUrl !== 'null' && <Image source={{ uri: imageUrl }} style={styles.enlargedImage} resizeMode="contain" />}
             </View>
         </Modal>
     );
@@ -37,7 +37,7 @@ const OfferItemCard = React.memo(({ item, onPriceChange, price, onImagePress, th
     return (
         <Card containerStyle={styles.itemCard}>
             <View style={styles.cardRow}>
-                {item.image_url ? (
+                {item.image_url && item.image_url !== 'null' ? (
                     <TouchableOpacity onPress={() => onImagePress(item.image_url!)}>
                         <Image source={{ uri: item.image_url }} style={styles.itemImage} />
                     </TouchableOpacity>

@@ -1,11 +1,10 @@
 // Ruta: app/(seller)/(listas)/list-details/[id].tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Image } from 'react-native';
-import { useLocalSearchParams, Link } from 'expo-router';
-import { Card, Icon } from '@rneui/themed';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Card, Icon, Button } from '@rneui/themed';
 import MapView, { Marker } from 'react-native-maps';
 
-import ForwardedButton from '../../../../src/components/ForwardedButton';
 import { useColorScheme } from '../../../../components/useColorScheme';
 import Colors from '../../../../constants/Colors';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
@@ -24,6 +23,7 @@ interface InfoRowProps {
 
 export default function SellerListDetailsScreen() {
   const { id } = useLocalSearchParams();
+  const router = useRouter();
   const listId = Array.isArray(id) ? id[0] : id;
   
   const colorScheme = useColorScheme();
@@ -99,7 +99,7 @@ export default function SellerListDetailsScreen() {
             {(listDetails.items || []).map((item: ShoppingListItem, index: number) => (
                 <Card key={index} containerStyle={styles.itemCard}>
                     <View style={styles.itemCardRow}>
-                        {item.image_url && (
+                        {item.image_url && item.image_url !== 'null' && (
                             <Image source={{ uri: item.image_url }} style={styles.itemImage} />
                         )}
                         <View style={styles.itemDetailsColumn}>
@@ -127,19 +127,15 @@ export default function SellerListDetailsScreen() {
         </ScrollView>
         <View style={styles.footer}>
             {listDetails.status === 'active' ? (
-                <Link 
-                    href={{
-                    pathname: "/(seller)/(listas)/create-offer",
-                    params: { listId: listId }
-                    }} 
-                    asChild
-                >
-                    <ForwardedButton 
-                        title="Hacer una oferta" 
-                        buttonStyle={styles.actionButton}
-                        icon={<Icon name="tag-plus-outline" type="material-community" color={Colors.dark.text} containerStyle={{marginRight: 10}} />}
-                    />
-                </Link>
+                <Button 
+                    title="Hacer una oferta" 
+                    buttonStyle={styles.actionButton}
+                    icon={<Icon name="tag-plus-outline" type="material-community" color={Colors.dark.text} containerStyle={{marginRight: 10}} />}
+                    onPress={() => router.push({
+                        pathname: "/(seller)/(listas)/create-offer",
+                        params: { listId: listId }
+                    })}
+                />
             ) : (
                 <Text style={styles.closedText}>Esta lista ya no acepta ofertas.</Text>
             )}

@@ -55,7 +55,7 @@ export default function BuyerHomeScreen() {
             onPress={() => router.push('/(buyer)/crear-lista')}
             buttonStyle={styles.mainButton}
             titleStyle={styles.mainButtonTitle}
-            icon={<Icon name="playlist-plus" type="material-community" color={COLORS.primary} />}
+            icon={<Icon name="playlist-plus" type="material-community" color="white" style={{ marginRight: 10 }} />}
           />
           
           <SectionHeader title="Mis listas activas" onPress={() => router.push('/(buyer)/(mis-listas)')} />
@@ -101,8 +101,23 @@ const styles = StyleSheet.create({
   contentContainer: { paddingTop: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20, marginTop: -20, backgroundColor: COLORS.background },
   panelTitle: { fontSize: scaleFont(22), fontWeight: 'bold', color: COLORS.primary, textAlign: 'center' },
   subtitle: { fontSize: scaleFont(14), color: COLORS.gray, marginTop: 4, textAlign: 'center', marginBottom: 15, paddingHorizontal: 10 },
-  mainButton: { backgroundColor: COLORS.accent, borderRadius: 12, marginHorizontal: 20, paddingVertical: 15 },
-  mainButtonTitle: { color: COLORS.primary, fontWeight: 'bold' },
+  mainButton: { 
+    backgroundColor: COLORS.primary, // Fondo Primario (Marca)
+    borderRadius: 30, // Más redondeado para look moderno
+    marginHorizontal: 20, 
+    paddingVertical: 14,
+    elevation: 4, // Sombra sutil
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  mainButtonTitle: { 
+    color: 'white', // Texto blanco
+    fontWeight: 'bold',
+    fontSize: scaleFont(16),
+    letterSpacing: 0.5 
+  },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginTop: 20, marginBottom: 10 },
   sectionTitle: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.text },
   seeAllText: { color: COLORS.secondary, fontWeight: '500' },

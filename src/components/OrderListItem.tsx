@@ -17,9 +17,13 @@ export function OrderListItem({ order, userRole }: Props) {
   const styles = createStyles(COLORS);
 
   const statusConfig = {
-    completed: { text: 'Completado', color: COLORS.primary },
+    completed: { text: 'Completado', color: COLORS.success }, // Verde
     confirmed: { text: 'Confirmado', color: COLORS.primary },
     enviado: { text: 'Enviado', color: COLORS.primary },
+    in_transit: { text: 'En Camino', color: COLORS.secondary },
+    ready_for_pickup: { text: 'Listo Recoger', color: COLORS.secondary },
+    delivered_pending_confirmation: { text: 'Recibido (Pendiente Pago)', color: '#FF9800' }, // Naranja/Warning
+    cancelled: { text: 'Cancelado', color: COLORS.danger },
     default: { text: 'Pendiente', color: COLORS.gray },
   };
 

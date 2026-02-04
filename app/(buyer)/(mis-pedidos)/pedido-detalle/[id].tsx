@@ -102,7 +102,7 @@ export default function BuyerOrderDetailsScreen() {
       <Card containerStyle={styles.card}>
         <CardTitle title="Productos del Pedido" iconName="basket" />
         <Card.Divider />
-        {(order?.shopping_lists?.items || []).map((item: OfferItem, index: number) => {
+        {(order?.items || []).map((item: OfferItem, index: number) => {
             const { displayName, imageUrl } = parseItemName(item.item_name);
             const totalItemPrice = item.quantity * item.unit_price;
 
@@ -163,7 +163,7 @@ export default function BuyerOrderDetailsScreen() {
         isVisible={isConfirmModalVisible}
         onClose={() => setConfirmModalVisible(false)}
         onConfirm={handleConfirmDelivery}
-        items={order?.shopping_lists?.items.map(i => ({...i, name: parseItemName(i.item_name).displayName})) || []}
+        items={(order?.items || []).map(i => ({ ...i, name: parseItemName(i.item_name).displayName }))}
       />
 
       <CancelOrderModal

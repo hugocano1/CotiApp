@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, LayoutAnimation, UIManager, Platform, Alert, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Card, Button, Icon } from '@rneui/themed';
+import { Card, Button, Icon, BottomSheet, ListItem } from '@rneui/themed';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
 import { COLORS } from '../../../../constants/Colors';
 import { scaleFont } from '../../../../src/utils/responsive';
@@ -18,9 +18,15 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const parseItemName = (itemName: string) => {
   const imgParts = itemName.split('__IMG__');
   const nameAndIdParts = imgParts[0].split('__ID__');
+  let imageUrl = imgParts.length > 1 ? imgParts[1] : null;
+  
+  if (imageUrl === 'null') {
+      imageUrl = null;
+  }
+
   return {
     displayName: nameAndIdParts[0],
-    imageUrl: imgParts.length > 1 ? imgParts[1] : null,
+    imageUrl: imageUrl,
   };
 };
 
@@ -40,7 +46,7 @@ const OfferAccordionCard = ({ offer, isExpanded, onToggle, onAccept }: { offer: 
         const { displayName, imageUrl } = parseItemName(item.item_name);
         return (
           <View key={item.id} style={[styles.offerItemRow, index % 2 === 1 && styles.offerItemRowAlt]}>
-            {imageUrl && <Image source={{ uri: imageUrl }} style={styles.offerItemImage} />}
+            {imageUrl && imageUrl !== 'null' && <Image source={{ uri: imageUrl }} style={styles.offerItemImage} />}
             <View style={styles.offerItemTextContainer}>
               <Text style={styles.offerItemName}>{item.quantity}x {displayName}</Text>
             </View>
@@ -90,6 +96,10 @@ export default function BuyerListDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [expandedOfferId, setExpandedOfferId] = useState<string | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
+  
+  // Payment Method Modal State
+  const [isPaymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [selectedOfferIdForPayment, setSelectedOfferIdForPayment] = useState<string | null>(null);
 
   useEffect(() => {
     if (listId) {
@@ -114,26 +124,27 @@ export default function BuyerListDetailsScreen() {
     setExpandedOfferId(currentId => (currentId === offerId ? null : offerId));
   };
 
-  const handleAcceptOffer = async (offerId: string) => {
-    Alert.alert(
-      "Aceptar Oferta",
-      "¿Estás seguro de que quieres aceptar esta oferta? Las demás serán rechazadas y la lista se cerrará.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Sí, Aceptar", onPress: async () => {
-          setIsAccepting(true);
-          try {
-            await ShoppingListService.acceptOffer(offerId, listId as string);
-            Alert.alert("¡Éxito!", "Has aceptado la oferta y se ha creado un nuevo pedido.");
-            router.replace({ pathname: '/(buyer)/(mis-pedidos)' });
-          } catch (error: any) {
-            Alert.alert("Error", error.message);
-          } finally {
-            setIsAccepting(false);
-          }
-        }}
-      ]
-    );
+  const handleOpenPaymentModal = (offerId: string) => {
+    setSelectedOfferIdForPayment(offerId);
+    setPaymentModalVisible(true);
+  };
+
+  const handleConfirmAccept = async (paymentMethod: string) => {
+    if (!selectedOfferIdForPayment) return;
+    
+    setPaymentModalVisible(false);
+    setIsAccepting(true);
+    
+    try {
+      await ShoppingListService.acceptOffer(selectedOfferIdForPayment, listId as string, paymentMethod);
+      Alert.alert("¡Éxito!", "Has aceptado la oferta y se ha creado un nuevo pedido.");
+      router.replace({ pathname: '/(buyer)/(mis-pedidos)' });
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setIsAccepting(false);
+      setSelectedOfferIdForPayment(null);
+    }
   };
 
   const handleDeleteList = async () => {
@@ -158,6 +169,12 @@ export default function BuyerListDetailsScreen() {
     );
   };
 
+  const paymentOptions = [
+    { title: 'Transferencia Anticipada (Nequi, Daviplata, etc.)', value: 'transferencia_anticipada', icon: 'bank-transfer' },
+    { title: 'Efectivo Contra Entrega', value: 'efectivo_contra_entrega', icon: 'cash' },
+    { title: 'Transferencia Contra Entrega', value: 'transferencia_contra_entrega', icon: 'cellphone-check' },
+  ];
+
   if (loading || isAccepting) {
     return (
       <View style={styles.centered}>
@@ -174,63 +191,88 @@ export default function BuyerListDetailsScreen() {
   const canDelete = listDetails.status === 'active' && offers.length === 0;
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>{listDetails.title || 'Detalles de la Lista'}</Text>
-      
-      <Card containerStyle={styles.card}>
-        <Card.Title style={styles.cardTitle}>Resumen de tu lista</Card.Title>
-        <Card.Divider/>
-        <InfoRow icon="information-outline" text="Estado" value={listDetails.status} />
-        <InfoRow icon="cash" text="Presupuesto" value={`${formatCurrency(listDetails.min_budget)} - ${formatCurrency(listDetails.max_budget)}`} />
-        <InfoRow icon="truck-delivery-outline" text="Tipo de Entrega" value={translateDeliveryType(listDetails.delivery_type)} />
-      </Card>
+    <View style={{flex: 1}}>
+      <ScrollView style={styles.container}>
+        <Text style={styles.header}>{listDetails.title || 'Detalles de la Lista'}</Text>
+        
+        <Card containerStyle={styles.card}>
+          <Card.Title style={styles.cardTitle}>Resumen de tu lista</Card.Title>
+          <Card.Divider/>
+          <InfoRow icon="information-outline" text="Estado" value={listDetails.status} />
+          <InfoRow icon="cash" text="Presupuesto" value={`${formatCurrency(listDetails.min_budget)} - ${formatCurrency(listDetails.max_budget)}`} />
+          <InfoRow icon="truck-delivery-outline" text="Tipo de Entrega" value={translateDeliveryType(listDetails.delivery_type)} />
+        </Card>
 
-      <Card containerStyle={styles.card}>
-        <Card.Title style={styles.cardTitle}>Artículos que solicitaste</Card.Title>
-        <Card.Divider/>
-        {(listDetails.items || []).map((item: ShoppingListItem, index: number) => (
-          <View key={index} style={styles.itemContainer}>
-            {item.image_url && (
-              <Image source={{ uri: item.image_url }} style={styles.itemImage} />
-            )}
-            <View style={styles.itemTextContainer}>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <View style={styles.itemDetailsRow}>
-                  <Text style={styles.itemDetailText}>Cantidad: {item.quantity} {item.unit || ''}</Text>
-                  {item.brand && <Text style={styles.itemDetailText}>· Marca: {item.brand}</Text>}
+        <Card containerStyle={styles.card}>
+          <Card.Title style={styles.cardTitle}>Artículos que solicitaste</Card.Title>
+          <Card.Divider/>
+          {(listDetails.items || []).map((item: ShoppingListItem, index: number) => (
+            <View key={index} style={styles.itemContainer}>
+              {item.image_url && item.image_url !== 'null' && (
+                <Image source={{ uri: item.image_url }} style={styles.itemImage} />
+              )}
+              <View style={styles.itemTextContainer}>
+                <Text style={styles.itemName}>{item.name}</Text>
+                <View style={styles.itemDetailsRow}>
+                    <Text style={styles.itemDetailText}>Cantidad: {item.quantity} {item.unit || ''}</Text>
+                    {item.brand && <Text style={styles.itemDetailText}>· Marca: {item.brand}</Text>}
+                </View>
+                {item.notes && <Text style={styles.itemNotes}>Notas: {item.notes}</Text>}
               </View>
-              {item.notes && <Text style={styles.itemNotes}>Notas: {item.notes}</Text>}
             </View>
-          </View>
-        ))}
-      </Card>
-      
-      <View style={styles.offersSection}>
-        <Text style={styles.offersHeader}>Ofertas recibidas</Text>
-        {offers.length > 0 ? (
-          offers.map(offer => (
-            <OfferAccordionCard
-              key={offer.id}
-              offer={offer}
-              isExpanded={expandedOfferId === offer.id}
-              onToggle={() => handleToggleOffer(offer.id)}
-              onAccept={handleAcceptOffer}
-            />
-          ))
-        ) : (
-          <Text style={styles.noOffersText}>Aún no has recibido ofertas para esta lista.</Text>
-        )}
-      </View>
+          ))}
+        </Card>
+        
+        <View style={styles.offersSection}>
+          <Text style={styles.offersHeader}>Ofertas recibidas</Text>
+          {offers.length > 0 ? (
+            offers.map(offer => (
+              <OfferAccordionCard
+                key={offer.id}
+                offer={offer}
+                isExpanded={expandedOfferId === offer.id}
+                onToggle={() => handleToggleOffer(offer.id)}
+                onAccept={handleOpenPaymentModal}
+              />
+            ))
+          ) : (
+            <Text style={styles.noOffersText}>Aún no has recibido ofertas para esta lista.</Text>
+          )}
+        </View>
 
-      {canDelete && (
-        <Button 
-          title="Borrar Lista"
-          onPress={handleDeleteList}
-          buttonStyle={styles.deleteButton}
-          icon={<Icon name="delete-outline" type="material-community" color="white" containerStyle={{marginRight: 10}} />}
-        />
-      )}
-    </ScrollView>
+        {canDelete && (
+          <Button 
+            title="Borrar Lista"
+            onPress={handleDeleteList}
+            buttonStyle={styles.deleteButton}
+            icon={<Icon name="delete-outline" type="material-community" color="white" containerStyle={{marginRight: 10}} />}
+          />
+        )}
+      </ScrollView>
+
+      <BottomSheet isVisible={isPaymentModalVisible} onBackdropPress={() => setPaymentModalVisible(false)}>
+        <View style={styles.bottomSheetContainer}>
+            <Text style={styles.bottomSheetHeader}>Selecciona el método de pago</Text>
+            <Text style={styles.bottomSheetSubHeader}>Acordarás el pago directamente con el vendedor.</Text>
+            {paymentOptions.map((l, i) => (
+            <ListItem key={i} onPress={() => handleConfirmAccept(l.value)} containerStyle={styles.listItem}>
+                <Icon name={l.icon} type="material-community" color={COLORS.primary} />
+                <ListItem.Content>
+                <ListItem.Title style={styles.listItemTitle}>{l.title}</ListItem.Title>
+                </ListItem.Content>
+                <ListItem.Chevron />
+            </ListItem>
+            ))}
+            <Button 
+                title="Cancelar" 
+                type="outline" 
+                onPress={() => setPaymentModalVisible(false)} 
+                buttonStyle={styles.cancelSheetButton}
+                titleStyle={{color: COLORS.danger}}
+            />
+        </View>
+      </BottomSheet>
+    </View>
   );
 }
 
@@ -256,7 +298,16 @@ const styles = StyleSheet.create({
     offersHeader: { fontSize: scaleFont(19), fontWeight: 'bold', color: COLORS.primary, marginLeft: 15, marginBottom: 10 },
     noOffersText: { textAlign: 'center', color: COLORS.gray, marginTop: 20, fontSize: scaleFont(14) },
 
-    offerCard: { borderRadius: 10, marginHorizontal: 10, marginBottom: 10, padding: 0, backgroundColor: '#fff', elevation: 2 },
+    offerCard: { 
+      borderRadius: 10, 
+      marginHorizontal: 10, 
+      marginBottom: 10, 
+      padding: 0, 
+      backgroundColor: '#FFFDE7', // Amarillo muy suave
+      elevation: 3,
+      borderWidth: 1.5,
+      borderColor: '#FBC02D' // Dorado
+    },
     summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 12 },
     summaryStore: { flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 10 },
     storeName: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.primary, marginLeft: 10, flexShrink: 1 },
@@ -274,4 +325,11 @@ const styles = StyleSheet.create({
     acceptButton: { backgroundColor: COLORS.secondary, borderRadius: 8, marginHorizontal: 15 },
     acceptButtonTitle: { fontSize: scaleFont(14) },
     deleteButton: { backgroundColor: COLORS.danger, borderRadius: 8, marginHorizontal: 15, marginTop: 20 },
+    
+    bottomSheetContainer: { backgroundColor: 'white', padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+    bottomSheetHeader: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.text, textAlign: 'center', marginBottom: 5 },
+    bottomSheetSubHeader: { fontSize: scaleFont(14), color: COLORS.gray, textAlign: 'center', marginBottom: 20 },
+    listItem: { borderRadius: 10, marginVertical: 5, backgroundColor: '#f8f9fa' },
+    listItemTitle: { fontSize: scaleFont(14), fontWeight: '500', color: COLORS.text },
+    cancelSheetButton: { marginTop: 15, borderColor: COLORS.danger, borderWidth: 1, borderRadius: 10 },
 });

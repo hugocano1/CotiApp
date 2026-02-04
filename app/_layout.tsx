@@ -17,6 +17,9 @@ export default function RootLayout() {
   const segments = useSegments();
   useNotifications();
 
+  // Queue for notifications received before session is ready
+  const [pendingNotification, setPendingNotification] = React.useState<Notifications.NotificationResponse | null>(null);
+
   const [fontsLoaded, fontError] = useFonts({
     ...Ionicons.font,
     ...MaterialCommunityIcons.font,
@@ -29,49 +32,54 @@ export default function RootLayout() {
     }
   }, [authLoading, fontsLoaded, fontError]);
 
+  // 1. Capture notification response
   useEffect(() => {
-    // Define a function to handle navigation based on notification data.
     const handleNotificationResponse = (response: Notifications.NotificationResponse | null) => {
-      if (!response) {
-        return;
-      }
-      
-      const data = response.notification.request.content.data;
-      console.log('Notification data received (type:', typeof data, 'value:', JSON.stringify(data, null, 2));
+      if (!response) return;
+      console.log('🔔 Notification tapped. Queuing for session...');
+      setPendingNotification(response);
+    };
 
-      // Wait until the session is loaded to get userRole.
-      if (!session) {
-        // Optionally, you could save the navigation path and execute it once the session loads.
-        // For now, we'll just log and wait for the user to tap again if needed.
-        console.log("Session not ready, can't navigate yet.");
-        return;
-      }
-      
+    Notifications.getLastNotificationResponseAsync().then(handleNotificationResponse);
+    const subscription = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
+
+    return () => subscription.remove();
+  }, []);
+
+  // 2. Process pending notification when session is ready
+  useEffect(() => {
+    if (!session || !pendingNotification) return;
+
+    const processNotification = async () => {
+      const data = pendingNotification.notification.request.content.data;
       const userRole = session.user?.user_metadata?.user_type;
+      
+      console.log('🚀 Processing notification navigation for role:', userRole, 'Data:', data);
 
       if (data?.orderId) {
         const orderId = data.orderId;
         if (userRole === 'buyer') {
-          router.push(`/(buyer)/mis-pedidos/pedido-detalle/${orderId}`);
+          router.push(`/(buyer)/(mis-pedidos)/pedido-detalle/${orderId}`);
         } else if (userRole === 'seller') {
-          router.push(`/(seller)/pedidos/order-details/${orderId}`);
+          router.push(`/(seller)/(pedidos)/order-details/${orderId}`);
         }
       } else if (data?.listId) {
         const listId = data.listId;
-        if (userRole === 'buyer') {
-          router.push(`/(buyer)/(mis-listas)/list-details/${listId}`);
+        // Assuming list offers navigation
+        if (userRole === 'seller') {
+             router.push(`/(seller)/(listas)/list-details/${listId}`);
+        } else {
+             // If buyer clicks a list notification (e.g. new offer)
+             router.push(`/(buyer)/(mis-listas)/list-details/${listId}`);
         }
       }
+      
+      // Clear queue
+      setPendingNotification(null);
     };
 
-    // 1. Handle notification that opened the app
-    Notifications.getLastNotificationResponseAsync().then(handleNotificationResponse);
-
-    // 2. Handle notification that is tapped while the app is running
-    const subscription = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
-
-    return () => subscription.remove();
-  }, [session, router]);
+    processNotification();
+  }, [session, pendingNotification, router]);
 
   useEffect(() => {
     if (authLoading || !fontsLoaded) return;
