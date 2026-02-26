@@ -42,7 +42,7 @@ export default function BuyerNotificationsScreen() {
   };
   
   const getIconName = (item: Notification) => {
-    if (item.data?.orderId) return 'receipt-text-check-outline';
+    if (item.data?.orderId) return 'receipt-check-outline';
     if (item.type === 'new_offer') return 'tag-outline';
     return 'bell-outline';
   };
