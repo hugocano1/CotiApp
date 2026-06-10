@@ -128,4 +128,51 @@ export class OrderService {
     }
     return { success: true };
   }
+
+  /**
+   * Obtiene reseñas recientes de un usuario (para mostrar a otros al tomar decisiones).
+   * @param userId El ID del usuario del que queremos ver las reseñas.
+   * @param role El rol del usuario ('buyer' o 'seller') del cual veremos las reseñas.
+   */
+  static async getRecentReviewsForUser(userId: string, role: 'buyer' | 'seller') {
+    const isSeller = role === 'seller';
+    const filterColumn = isSeller ? 'seller_id' : 'buyer_id';
+    const ratingColumn = isSeller ? 'rating_for_seller' : 'rating_for_buyer';
+    const commentColumn = isSeller ? 'comment_for_seller' : 'comment_for_buyer';
+    const reviewerJoin = isSeller ? 'buyer_profiles(nombre, foto_perfil)' : 'seller_profiles(nombre, foto_perfil, stores(name))';
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        id,
+        created_at,
+        ${ratingColumn},
+        ${commentColumn},
+        ${reviewerJoin}
+      `)
+      .eq(filterColumn, userId)
+      .not(ratingColumn, 'is', null)
+      .not(commentColumn, 'is', null)
+      .neq(commentColumn, '')
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    if (error) {
+      console.error("Error fetching reviews:", error);
+      return [];
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      date: row.created_at,
+      rating: row[ratingColumn],
+      comment: row[commentColumn],
+      reviewerName: isSeller 
+          ? row.buyer_profiles?.nombre || 'Comprador'
+          : row.seller_profiles?.stores?.name || row.seller_profiles?.nombre || 'Vendedor',
+      reviewerAvatar: isSeller 
+          ? row.buyer_profiles?.foto_perfil 
+          : row.seller_profiles?.foto_perfil
+    }));
+  }
 }

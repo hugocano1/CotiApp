@@ -1,196 +1,125 @@
-// Ruta: app/(seller)/(listas)/list-details/[id].tsx
+// app/(seller)/(listas)/list-details/[id].tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Image } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Card, Icon, Button } from '@rneui/themed';
-import MapView, { Marker } from 'react-native-maps';
-
-import { useColorScheme } from '../../../../components/useColorScheme';
-import Colors from '../../../../constants/Colors';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Image } from 'react-native';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ShoppingListService } from '../../../../src/services/shoppingList.service';
+import { COLORS } from '../../../../constants/Colors';
+import { Icon, Button, Card, ListItem } from '@rneui/themed';
 import { scaleFont } from '../../../../src/utils/responsive';
 import { ShoppingList, ShoppingListItem } from '../../../../src/types/entities';
-import { translateDeliveryType } from '../../../../src/utils/translations';
+import { formatCurrency } from '../../../../src/utils/formatters';
+import { RecentReviews } from '../../../../src/components/RecentReviews';
 
-type ThemeColors = typeof Colors.light;
-
-interface InfoRowProps {
-  icon: string;
-  text: string;
-  value: string | number;
-  themeColors: ThemeColors;
-}
-
-export default function SellerListDetailsScreen() {
-  const { id } = useLocalSearchParams();
+export default function ListDetailsScreen() {
+  const { id: listId } = useLocalSearchParams();
   const router = useRouter();
-  const listId = Array.isArray(id) ? id[0] : id;
-  
-  const colorScheme = useColorScheme();
-  const themeColors = Colors[colorScheme ?? 'light'];
-  const styles = createStyles(themeColors);
-
-  const [listDetails, setListDetails] = useState<ShoppingList | null>(null);
+  const [list, setList] = useState<ShoppingList | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (listId) {
-      setLoading(true);
+    if (typeof listId === 'string') {
       ShoppingListService.getListDetails(listId)
-        .then(setListDetails)
-        .catch(err => console.error("Error fetching list details:", err))
+        .then(setList)
+        .catch(err => {
+            console.error(err);
+            Alert.alert("Error", "No se pudo cargar el detalle de la lista.");
+        })
         .finally(() => setLoading(false));
     }
   }, [listId]);
 
-  const dispatchDate = listDetails?.delivery_date 
-    ? new Date(listDetails.delivery_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) 
+  if (loading) return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
+  if (!list) return <View style={styles.centered}><Text>No se encontró la lista.</Text></View>;
+
+  const buyerProfile = list.buyer_profiles;
+  const deliveryType = list.delivery_type === 'delivery' ? 'Domicilio' : 'Recogida en tienda';
+  const deliveryDate = list?.delivery_date 
+    ? new Date(list.delivery_date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
     : 'No especificada';
 
-  const showMap = listDetails?.delivery_type === 'delivery' && listDetails.latitude && listDetails.longitude;
-
-  if (loading) {
-    return <View style={styles.centered}><ActivityIndicator size="large" color={themeColors.tint} /></View>;
-  }
-  if (!listDetails) {
-    return <View style={styles.centered}><Text style={styles.infoTextValue}>No se encontraron los detalles de la lista.</Text></View>;
-  }
-
   return (
-    <View style={{flex: 1, backgroundColor: themeColors.background}}>
-        <ScrollView style={styles.container}>
-            <View style={styles.headerContainer}>
-                <Text style={styles.header}>{listDetails.title || 'Detalles de la Lista'}</Text>
-                {listDetails.buyer_profiles && <Text style={styles.buyerName}>De: {listDetails.buyer_profiles.nombre} {listDetails.buyer_profiles.apellido}</Text>}
-            </View>
-            
-            <Card containerStyle={styles.card}>
-                <Card.Title style={styles.cardTitle}>Información general</Card.Title>
-                <Card.Divider color={themeColors.border} />
-                <InfoRow icon="calendar-outline" text="Fecha Despacho:" value={dispatchDate} themeColors={themeColors}/>
-                <InfoRow icon="cash" text="Presupuesto:" value={`$${listDetails.min_budget || 'N/A'} - $${listDetails.max_budget || 'N/A'}`} themeColors={themeColors} />
-                <InfoRow icon="truck-delivery-outline" text="Entrega:" value={translateDeliveryType(listDetails.delivery_type)} themeColors={themeColors} />
-            </Card>
-
-            {showMap && (
-              <Card containerStyle={styles.card}>
-                <Card.Title style={styles.cardTitle}>Ubicación de entrega</Card.Title>
-                <Card.Divider color={themeColors.border}/>
-                <View style={styles.mapContainer}>
-                  <MapView
-                    style={styles.map}
-                    initialRegion={{
-                      latitude: listDetails.latitude!,
-                      longitude: listDetails.longitude!,
-                      latitudeDelta: 0.01,
-                      longitudeDelta: 0.01,
-                    }}
-                  >
-                    <Marker
-                      coordinate={{ latitude: listDetails.latitude!, longitude: listDetails.longitude! }}
-                      title="Ubicación de entrega"
-                    />
-                  </MapView>
+    <ScrollView style={styles.container}>
+      <Stack.Screen options={{ title: 'Detalle de la Lista' }} />
+      
+      {/* Perfil del Comprador */}
+      <Card containerStyle={styles.card}>
+        <View style={styles.buyerHeader}>
+            <Icon name="account-circle" type="material-community" size={50} color={COLORS.secondary} />
+            <View style={styles.buyerInfo}>
+                <Text style={styles.buyerName}>{buyerProfile?.nombre} {buyerProfile?.apellido}</Text>
+                <View style={styles.ratingRow}>
+                    <Icon name="star" type="material-community" size={16} color={COLORS.star} />
+                    <Text style={styles.ratingText}>{buyerProfile?.calificacion_comprador?.toFixed(1) || 'N/A'}</Text>
                 </View>
-              </Card>
-            )}
-            
-            <Text style={styles.sectionHeader}>Artículos Solicitados</Text>
-            {(listDetails.items || []).map((item: ShoppingListItem, index: number) => (
-                <Card key={index} containerStyle={styles.itemCard}>
-                    <View style={styles.itemCardRow}>
-                        {item.image_url && item.image_url !== 'null' && (
-                            <Image source={{ uri: item.image_url }} style={styles.itemImage} />
-                        )}
-                        <View style={styles.itemDetailsColumn}>
-                            <Text style={styles.itemName}>{item.name}</Text>
-                            {item.brand && 
-                                <View style={styles.metaItem}>
-                                    <Icon name="tag-outline" type="material-community" color={Colors.light.tabIconDefault} size={14} />
-                                    <Text style={styles.itemMetaText}>{item.brand}</Text>
-                                </View>
-                            }
-                            {item.notes && 
-                                <View style={styles.metaItem}>
-                                    <Icon name="information-outline" type="material-community" color={Colors.light.tabIconDefault} size={14} />
-                                    <Text style={styles.itemNotes}>{item.notes}</Text>
-                                </View>
-                            }
-                        </View>
-                        <View style={[styles.itemQuantityColumn, { borderLeftColor: themeColors.border }]}>
-                            <Text style={[styles.itemQuantityText, { color: themeColors.tint }]}>{item.quantity}</Text>
-                            <Text style={styles.itemUnitText}>{item.unit || 'unid.'}</Text>
-                        </View>
-                    </View>
-                </Card>
-            ))}
-        </ScrollView>
-        <View style={styles.footer}>
-            {listDetails.status === 'active' ? (
-                <Button 
-                    title="Hacer una oferta" 
-                    buttonStyle={styles.actionButton}
-                    icon={<Icon name="tag-plus-outline" type="material-community" color={Colors.dark.text} containerStyle={{marginRight: 10}} />}
-                    onPress={() => router.push({
-                        pathname: "/(seller)/(listas)/create-offer",
-                        params: { listId: listId }
-                    })}
-                />
-            ) : (
-                <Text style={styles.closedText}>Esta lista ya no acepta ofertas.</Text>
-            )}
+            </View>
         </View>
-    </View>
+        <Card.Divider style={{ marginTop: 15 }} />
+        <RecentReviews userId={list.buyer_id} role="buyer" />
+      </Card>
+
+      {/* Info de la Lista */}
+      <Card containerStyle={styles.card}>
+        <Card.Title style={styles.listTitle}>{list.title}</Card.Title>
+        <Card.Divider />
+        <View style={styles.infoRow}>
+            <Icon name="truck-delivery" type="material-community" size={20} color={COLORS.secondary} />
+            <Text style={styles.infoText}>{deliveryType}</Text>
+        </View>
+        <View style={styles.infoRow}>
+            <Icon name="calendar" type="material-community" size={20} color={COLORS.secondary} />
+            <Text style={styles.infoText}>{deliveryDate}</Text>
+        </View>
+        {(list.min_budget || list.max_budget) && (
+            <View style={styles.infoRow}>
+                <Icon name="cash" type="material-community" size={20} color={COLORS.secondary} />
+                <Text style={styles.infoText}>
+                    Presupuesto: {list.min_budget ? formatCurrency(list.min_budget) : '?'} - {list.max_budget ? formatCurrency(list.max_budget) : '?'}
+                </Text>
+            </View>
+        )}
+      </Card>
+
+      {/* Artículos */}
+      <Card containerStyle={styles.card}>
+        <Card.Title style={{ color: COLORS.secondary }}>Artículos solicitados</Card.Title>
+        <Card.Divider />
+        {(list.items as ShoppingListItem[] || []).map((item, index) => (
+            <ListItem key={item.id || index} bottomDivider>
+                {item.image_url && <Image source={{ uri: item.image_url }} style={styles.itemImage} />}
+                <ListItem.Content>
+                    <ListItem.Title style={styles.itemName}>{item.name}</ListItem.Title>
+                    <ListItem.Subtitle style={styles.itemSub}>{item.quantity} {item.unit} {item.brand ? `• ${item.brand}` : ''}</ListItem.Subtitle>
+                </ListItem.Content>
+            </ListItem>
+        ))}
+      </Card>
+
+      <View style={styles.buttonPadding}>
+          <Button 
+            title="Hacer una Oferta" 
+            onPress={() => router.push({ pathname: "/(seller)/(listas)/create-offer", params: { listId: list.id } })}
+            buttonStyle={{ backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 12 }}
+            titleStyle={{ fontWeight: 'bold' }}
+          />
+      </View>
+    </ScrollView>
   );
 }
 
-const InfoRow = ({ icon, text, value, themeColors }: InfoRowProps) => {
-    const styles = createStyles(themeColors);
-    return (
-        <View style={styles.infoRow}>
-            <Icon name={icon} type="material-community" color={themeColors.text} size={18} />
-            <Text style={styles.infoTextLabel}>{text}</Text>
-            <Text style={styles.infoTextValue}>{value}</Text>
-        </View> 
-    );
-};
-
-const createStyles = (themeColors: ThemeColors) => StyleSheet.create({
-  container: { flex: 1 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeColors.background },
-  headerContainer: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 10, backgroundColor: themeColors.card, borderBottomWidth: 1, borderBottomColor: themeColors.border },
-  header: { fontSize: scaleFont(20), fontWeight: 'bold', textAlign: 'center', color: themeColors.text, flexShrink: 1 },
-  buyerName: { fontSize: scaleFont(13), textAlign: 'center', color: Colors.light.tabIconDefault, marginTop: 4 },
-  card: { borderRadius: 12, marginHorizontal: 15, marginTop: 15, paddingBottom: 10, backgroundColor: themeColors.card, borderWidth: 1, borderColor: themeColors.border },
-  cardTitle: { fontSize: scaleFont(16), color: themeColors.text, fontWeight: '600' },
-  sectionHeader: { fontSize: scaleFont(16), fontWeight: '600', color: themeColors.text, marginHorizontal: 20, marginTop: 20, marginBottom: 5 },
-  infoRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
-  infoTextLabel: { marginLeft: 10, fontSize: scaleFont(14), color: Colors.light.tabIconDefault },
-  infoTextValue: { marginLeft: 5, fontSize: scaleFont(14), color: themeColors.text, fontWeight: '500' },
-  mapContainer: {
-    height: 200,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 10,
-    backgroundColor: themeColors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: themeColors.border
-  },
-  map: { ...StyleSheet.absoluteFillObject },
-  itemCard: { borderRadius: 10, marginHorizontal: 15, marginBottom: 10, padding: 12, backgroundColor: themeColors.card, borderWidth: 1, borderColor: themeColors.border },
-  itemCardRow: { flexDirection: 'row', alignItems: 'center' },
-  itemImage: { width: 45, height: 45, borderRadius: 8, marginRight: 12, backgroundColor: themeColors.background },
-  itemDetailsColumn: { flex: 1, paddingRight: 10 },
-  itemQuantityColumn: { alignItems: 'center', justifyContent: 'center', paddingLeft: 10, borderLeftWidth: 1 },
-  itemName: { fontSize: scaleFont(15), fontWeight: '600', color: themeColors.text, marginBottom: 6 },
-  metaItem: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  itemMetaText: { fontSize: scaleFont(12), color: Colors.light.tabIconDefault, marginLeft: 5 },
-  itemNotes: { fontSize: scaleFont(12), color: themeColors.text, fontStyle: 'italic', marginLeft: 5 },
-  itemQuantityText: { fontSize: scaleFont(18), fontWeight: 'bold' },
-  itemUnitText: { fontSize: scaleFont(12), color: Colors.light.tabIconDefault },
-  footer: { padding: 15, backgroundColor: themeColors.card, borderTopWidth: 1, borderTopColor: themeColors.border },
-  actionButton: { backgroundColor: themeColors.tint, borderRadius: 10, paddingVertical: 10 },
-  closedText: { textAlign: 'center', fontStyle: 'italic', color: Colors.light.tabIconDefault, fontSize: scaleFont(14) },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  card: { borderRadius: 12, marginHorizontal: 15, marginBottom: 15, padding: 15 },
+  buyerHeader: { flexDirection: 'row', alignItems: 'center' },
+  buyerInfo: { marginLeft: 15, flex: 1 },
+  buyerName: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.secondary },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  ratingText: { marginLeft: 5, color: COLORS.gray, fontWeight: 'bold' },
+  listTitle: { textAlign: 'left', fontSize: scaleFont(20), color: COLORS.secondary },
+  infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  infoText: { marginLeft: 10, fontSize: scaleFont(14), color: COLORS.text },
+  itemName: { fontWeight: 'bold', color: COLORS.text },
+  itemSub: { color: COLORS.gray, fontSize: scaleFont(12) },
+  itemImage: { width: 50, height: 50, borderRadius: 8, marginRight: 10 },
+  buttonPadding: { padding: 20, paddingBottom: 40 }
 });

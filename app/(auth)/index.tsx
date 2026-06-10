@@ -48,7 +48,7 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
             <Image source={Logo} style={styles.logo} />
-            <Text style={styles.tagline}>El mejor precio para tu lista de compras</Text>
+            <Text style={styles.tagline}></Text>
 
             <View style={styles.inputContainer}>
               <Ionicons name="mail-outline" size={20} color="white" style={styles.inputIcon} />
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     backgroundImage: { flex: 1 },
     keyboardView: { flex: 1 },
     scrollContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
-    container: { width: '85%', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', padding: 25, borderRadius: 20 },
+    container: { width: '85%', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.15)', padding: 25, borderRadius: 20 },
     logo: { width: 120, height: 120, resizeMode: 'contain', marginBottom: 10 },
     tagline: { fontSize: scaleFont(16), color: 'white', marginBottom: 35, textAlign: 'center', fontWeight: '500' },
     inputContainer: {

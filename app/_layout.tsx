@@ -124,9 +124,10 @@ export default function RootLayout() {
         router.replace('/welcome');
       }
     } else if (userRole) {
-      if (userRole === 'buyer' && segment !== '(buyer)') {
+      const isSharedPath = segment === '(shared)';
+      if (userRole === 'buyer' && segment !== '(buyer)' && !isSharedPath) {
         router.replace('/(buyer)/');
-      } else if (userRole === 'seller' && segment !== '(seller)') {
+      } else if (userRole === 'seller' && segment !== '(seller)' && !isSharedPath) {
         router.replace('/(seller)/');
       }
     }

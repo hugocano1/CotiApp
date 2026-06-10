@@ -1,9 +1,10 @@
 // Ruta: app/(seller)/(listas)/index.tsx
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { ButtonGroup, Icon } from '@rneui/themed';
 import { Link, useRouter, useFocusEffect } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 import { supabase } from '../../../src/services/auth/config/supabaseClient';
 import { COLORS } from '../../../constants/Colors';
 import { SellerListItem } from '../../../src/components/SellerListItem';
@@ -54,6 +55,22 @@ export default function AvailableListsScreen() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const statusFilter = selectedIndex === 0 ? 'active' : 'closed';
   const { lists, loading, refresh } = useAvailableLists(statusFilter);
+  const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        return;
+      }
+      try {
+        let location = await Location.getCurrentPositionAsync({});
+        setUserLocation(location);
+      } catch (error) {
+        console.error("Error getting location:", error);
+      }
+    })();
+  }, []);
 
   const listsWithLocation = useMemo(() => 
     lists.filter(list => list.latitude && list.longitude && list.delivery_type === 'delivery'),
@@ -61,6 +78,14 @@ export default function AvailableListsScreen() {
   );
   
   const initialRegion = useMemo(() => {
+    if (userLocation) {
+      return {
+        latitude: userLocation.coords.latitude,
+        longitude: userLocation.coords.longitude,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
+      };
+    }
     if (listsWithLocation.length > 0) {
       return {
         latitude: listsWithLocation[0].latitude!,
@@ -69,14 +94,14 @@ export default function AvailableListsScreen() {
         longitudeDelta: 0.0421,
       };
     }
-    // Fallback region if no lists have location (e.g., center of a default city)
+    // Fallback region if no lists have location
     return {
       latitude: -33.45694,
       longitude: -70.64827,
       latitudeDelta: 0.5,
       longitudeDelta: 0.5,
     };
-  }, [listsWithLocation]);
+  }, [listsWithLocation, userLocation]);
 
   const handleMarkerPress = (listId: string) => {
     router.push(`/(seller)/(listas)/list-details/${listId}`);
@@ -89,7 +114,7 @@ export default function AvailableListsScreen() {
           {loading ? (
             <ActivityIndicator size="large" style={styles.centered} />
           ) : (
-            <MapView style={styles.map} initialRegion={initialRegion}>
+            <MapView style={styles.map} region={initialRegion} showsUserLocation={true}>
               {listsWithLocation.map(list => (
                 <Marker
                   key={list.id}

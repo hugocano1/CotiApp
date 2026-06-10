@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, Image, TouchableOpacity } from 'react-native';
 import { Card, Icon, Button } from '@rneui/themed';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useOrderDetails } from '../../../../src/hooks/useOrderDetails';
 import { OrderService } from '../../../../src/services/order.service';
 import { COLORS } from '../../../../constants/Colors';
@@ -81,10 +81,38 @@ export default function BuyerOrderDetailsScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      {/* ✅ NAVEGACIÓN SEGURA CON BOTÓN ATRÁS */}
+      <Stack.Screen 
+        options={{
+          headerLeft: () => (
+            <Icon 
+              name="arrow-left" 
+              type="material-community" 
+              color={COLORS.white} 
+              size={24} 
+              containerStyle={{ marginRight: 20 }}
+              onPress={() => router.navigate('/(buyer)/(mis-pedidos)')} 
+            />
+          ),
+          title: "Detalle del Pedido"
+        }} 
+      />
+
       <Card containerStyle={styles.card}>
         <View style={styles.headerContainer}>
-            <Text style={styles.headerTitle}>Pedido a: {order.seller_profiles?.stores?.name || 'Vendedor'}</Text>
-            <StatusDisplay status={order.status} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.headerTitle}>Pedido a: {order.seller_profiles?.stores?.name || 'Vendedor'}</Text>
+              <StatusDisplay status={order.status} />
+            </View>
+            {order.status !== 'cancelled' && (
+              <TouchableOpacity 
+                style={styles.chatButton} 
+                onPress={() => router.push({ pathname: "/(shared)/chat/[orderId]", params: { orderId: order.id } })}
+              >
+                <Icon name="message-text" type="material-community" color={COLORS.primary} size={28} />
+                <Text style={styles.chatButtonText}>Chat</Text>
+              </TouchableOpacity>
+            )}
         </View>
         <Card.Divider style={{ marginVertical: 15 }}/>
         <InfoRow icon="cash" label="Valor Total" value={formatCurrency(order.total_price)} />
@@ -109,7 +137,7 @@ export default function BuyerOrderDetailsScreen() {
             return (
               <View key={item.id || index} style={styles.itemContainer}>
                 <View style={styles.itemRow}>
-                    {imageUrl && <Image source={{ uri: imageUrl }} style={styles.itemImage} />}
+                    {imageUrl && <Image source={imageUrl ? { uri: imageUrl } : undefined} style={styles.itemImage} />}
                     <View style={styles.itemTextContainer}>
                       <Text style={styles.itemName}>{displayName}</Text>
                       <Text style={styles.itemDetails}>
@@ -181,6 +209,8 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   card: { borderRadius: 12, marginHorizontal: 12, marginBottom: 8, paddingBottom: 10 },
   headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  chatButton: { alignItems: 'center', justifyContent: 'center', padding: 10, backgroundColor: '#F0F9F8', borderRadius: 12, borderWidth: 1, borderColor: COLORS.primary },
+  chatButtonText: { fontSize: scaleFont(12), fontWeight: 'bold', color: COLORS.primary, marginTop: 2 },
   headerTitle: { fontSize: scaleFont(16), fontWeight: 'bold', color: COLORS.primary, flex: 1 },
   itemContainer: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   itemRow: { flexDirection: 'row', alignItems: 'center' },

@@ -172,6 +172,9 @@ export interface Order {
   buyer_id: string;
   buyer_profiles?: BuyerProfile; // The buyer involved in the order
   rating_for_seller?: number;
+  rating_for_buyer?: number;
+  comment_for_seller?: string;
+  comment_for_buyer?: string;
   commission_amount?: number;
 }
 

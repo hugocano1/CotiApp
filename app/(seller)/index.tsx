@@ -1,9 +1,10 @@
 // Ruta: app/(seller)/index.tsx
-import React, { useLayoutEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image, Dimensions } from 'react-native';
+import React, { useLayoutEffect, useState, useCallback, useMemo, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
 import { Icon } from '@rneui/themed';
 import { Link, useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 import { COLORS } from '../../constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSellerOrders } from '../../src/hooks/useSellerOrders';
@@ -69,8 +70,16 @@ function useActiveShoppingLists() {
     return { lists, loading };
 }
 
-const MapPreviewCard = ({ lists, loading, onPress }: { lists: ShoppingListPreview[], loading: boolean, onPress: () => void }) => {
+const MapPreviewCard = ({ lists, loading, userLocation, onPress }: { lists: ShoppingListPreview[], loading: boolean, userLocation: Location.LocationObject | null, onPress: () => void }) => {
     const initialRegion = useMemo(() => {
+        if (userLocation) {
+            return {
+                latitude: userLocation.coords.latitude,
+                longitude: userLocation.coords.longitude,
+                latitudeDelta: 0.1,
+                longitudeDelta: 0.1,
+            };
+        }
         if (lists.length > 0) {
           return {
             latitude: lists[0].latitude,
@@ -80,7 +89,7 @@ const MapPreviewCard = ({ lists, loading, onPress }: { lists: ShoppingListPrevie
           };
         }
         return { latitude: -33.45694, longitude: -70.64827, latitudeDelta: 0.5, longitudeDelta: 0.5 };
-    }, [lists]);
+    }, [lists, userLocation]);
     
     return (
         <TouchableOpacity onPress={onPress} style={styles.mapCard}>
@@ -93,7 +102,13 @@ const MapPreviewCard = ({ lists, loading, onPress }: { lists: ShoppingListPrevie
                 {loading ? (
                     <ActivityIndicator />
                 ) : (
-                    <MapView style={styles.map} initialRegion={initialRegion} scrollEnabled={false} zoomEnabled={false}>
+                    <MapView 
+                        style={styles.map} 
+                        region={initialRegion}
+                        scrollEnabled={false} 
+                        zoomEnabled={false}
+                        showsUserLocation={true}
+                    >
                         {lists.map(list => (
                             <Marker key={list.id} coordinate={{ latitude: list.latitude, longitude: list.longitude }}>
                                 <View style={styles.markerContainer}>
@@ -113,7 +128,7 @@ const MapPreviewCard = ({ lists, loading, onPress }: { lists: ShoppingListPrevie
             </View>
             <View style={styles.mapCardFooter}>
                 <Text style={styles.mapCardFooterText}>Toca para explorar el mapa</Text>
-                <Icon name="arrow-right" type="material-community" color={COLORS.secondary} />
+                <Icon name="arrow-right" type="material-community" color={COLORS.primary} />
             </View>
         </TouchableOpacity>
     );
@@ -133,6 +148,24 @@ export default function SellerHomeScreen() {
     
     const { offers: recentOffers, loading: offersLoading } = useSellerOffers(3);
     const { lists: activeLists, loading: listsLoading } = useActiveShoppingLists();
+
+    const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+
+    useEffect(() => {
+        (async () => {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                console.log('Permission to access location was denied');
+                return;
+            }
+            try {
+                let location = await Location.getCurrentPositionAsync({});
+                setUserLocation(location);
+            } catch (error) {
+                console.error("Error getting current location:", error);
+            }
+        })();
+    }, []);
 
     const welcomeMessage = profile?.nombre ? `Hola, ${profile.nombre}!` : 'Bienvenido a Coti';
 
@@ -159,6 +192,7 @@ export default function SellerHomeScreen() {
                     <MapPreviewCard 
                         lists={activeLists} 
                         loading={listsLoading} 
+                        userLocation={userLocation}
                         onPress={() => router.push('/(seller)/(listas)')} 
                     />
 
@@ -206,7 +240,7 @@ const styles = StyleSheet.create({
     promoImageContainer: { height: 180, backgroundColor: COLORS.primary },
     promoImage: { width: '100%', height: '100%', resizeMode: 'cover' },
     contentContainer: { paddingTop: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20, marginTop: -20, backgroundColor: COLORS.background },
-    panelTitle: { fontSize: scaleFont(16), fontWeight: '600', color: COLORS.liziDark, textAlign: 'center', marginBottom: 15, opacity: 0.8 },
+    panelTitle: { fontSize: scaleFont(16), fontWeight: '600', color: COLORS.secondary, textAlign: 'center', marginBottom: 15, opacity: 0.8 },
     subtitle: { fontSize: scaleFont(14), color: COLORS.gray, marginTop: 4, textAlign: 'center', marginBottom: 15, paddingHorizontal: 10 },
     
     mapCard: {
@@ -249,13 +283,13 @@ const styles = StyleSheet.create({
     },
     mapCardFooterText: {
         fontSize: scaleFont(13),
-        color: COLORS.secondary,
+        color: COLORS.primary,
         fontWeight: '500',
         marginRight: 4,
     },
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginTop: 20, marginBottom: 10 },
-    sectionTitle: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.text },
-    seeAllText: { color: COLORS.secondary, fontWeight: '500' },
+    sectionTitle: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.secondary },
+    seeAllText: { color: COLORS.primary, fontWeight: '500' },
     emptyText: { textAlign: 'center', color: COLORS.gray, margin: 20 },
     cardSpacing: { marginTop: -3 },
     

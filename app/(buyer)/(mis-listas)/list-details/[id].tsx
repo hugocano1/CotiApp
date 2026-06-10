@@ -8,25 +8,29 @@ import { scaleFont } from '../../../../src/utils/responsive';
 import { ShoppingList, ShoppingListItem, Offer, OfferItem } from '../../../../src/types/entities';
 import { translateDeliveryType } from '../../../../src/utils/translations';
 import { formatCurrency } from '../../../../src/utils/formatters';
+import { RecentReviews } from '../../../../src/components/RecentReviews';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// Helper para parsear el item_name
+// Helper para parsear el item_name (Formato extendido: Nombre__ID__uuid__IMG__UrlComprador__SELLERIMG__UrlVendedor)
 const parseItemName = (itemName: string) => {
-  const imgParts = itemName.split('__IMG__');
+  const sellerParts = itemName.split('__SELLERIMG__');
+  const imgParts = sellerParts[0].split('__IMG__');
   const nameAndIdParts = imgParts[0].split('__ID__');
-  let imageUrl = imgParts.length > 1 ? imgParts[1] : null;
   
-  if (imageUrl === 'null') {
-      imageUrl = null;
-  }
+  let buyerImageUrl = imgParts.length > 1 ? imgParts[1] : null;
+  let sellerImageUrl = sellerParts.length > 1 ? sellerParts[1] : null;
+  
+  if (buyerImageUrl === 'null') buyerImageUrl = null;
+  if (sellerImageUrl === 'null') sellerImageUrl = null;
 
   return {
     displayName: nameAndIdParts[0],
-    imageUrl: imageUrl,
+    buyerImageUrl: buyerImageUrl,
+    sellerImageUrl: sellerImageUrl,
   };
 };
 
@@ -42,13 +46,32 @@ const OfferAccordionCard = ({ offer, isExpanded, onToggle, onAccept }: { offer: 
   
   const renderOfferItems = () => (
     <View style={styles.offerItemsContainer}>
+      <Card.Divider style={{ marginBottom: 10 }} />
+      <Text style={styles.expandedStoreName}>{offer.seller_profiles?.nombre || 'Vendedor'}</Text>
+      <View style={styles.ratingRow}>
+          <Icon name="star" type="material-community" size={14} color={COLORS.star} />
+          <Text style={styles.ratingText}>{offer.seller_profiles?.calificacion_vendedor?.toFixed(1) || 'N/A'}</Text>
+      </View>
+      <RecentReviews userId={offer.seller_id} role="seller" />
+      <Card.Divider style={{ marginVertical: 10 }} />
       {offer.offer_items.map((item: OfferItem, index: number) => {
-        const { displayName, imageUrl } = parseItemName(item.item_name);
+        const { displayName, buyerImageUrl, sellerImageUrl } = parseItemName(item.item_name);
         return (
           <View key={item.id} style={[styles.offerItemRow, index % 2 === 1 && styles.offerItemRowAlt]}>
-            {imageUrl && imageUrl !== 'null' && <Image source={{ uri: imageUrl }} style={styles.offerItemImage} />}
+            <View style={styles.imageComparisonWrapper}>
+                {buyerImageUrl && <Image source={{ uri: buyerImageUrl }} style={styles.offerItemImage} />}
+                {sellerImageUrl && (
+                    <View style={styles.sellerImageBadgeContainer}>
+                        <Image source={{ uri: sellerImageUrl }} style={[styles.offerItemImage, styles.sellerImageOverlay]} />
+                        <View style={styles.proposeBadge}>
+                            <Icon name="star" type="material-community" size={8} color="white" />
+                        </View>
+                    </View>
+                )}
+            </View>
             <View style={styles.offerItemTextContainer}>
               <Text style={styles.offerItemName}>{item.quantity}x {displayName}</Text>
+              {sellerImageUrl && <Text style={styles.proposeText}>Vendedor propone este producto</Text>}
             </View>
             <Text style={styles.offerItemPrice}>{formatCurrency(item.unit_price * item.quantity)}</Text>
           </View>
@@ -315,8 +338,16 @@ const styles = StyleSheet.create({
     summaryPrice: { fontSize: scaleFont(17), fontWeight: 'bold', color: COLORS.text, marginRight: 8 },
     
     offerItemsContainer: { paddingTop: 0, paddingBottom: 10 },
+    expandedStoreName: { fontSize: scaleFont(15), fontWeight: 'bold', color: COLORS.text, marginLeft: 15 },
+    ratingRow: { flexDirection: 'row', alignItems: 'center', marginLeft: 15, marginBottom: 5 },
+    ratingText: { fontSize: scaleFont(13), color: COLORS.star, fontWeight: 'bold', marginLeft: 4 },
     offerItemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 15 },
     offerItemImage: { width: 40, height: 40, borderRadius: 6, marginRight: 10, backgroundColor: '#eee' },
+    imageComparisonWrapper: { flexDirection: 'row', alignItems: 'center', marginRight: 10 },
+    sellerImageBadgeContainer: { marginLeft: -15, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 2 },
+    sellerImageOverlay: { borderWidth: 2, borderColor: 'white' },
+    proposeBadge: { position: 'absolute', top: -5, right: 5, backgroundColor: COLORS.secondary, borderRadius: 10, padding: 2 },
+    proposeText: { fontSize: scaleFont(10), color: COLORS.secondary, fontWeight: 'bold' },
     offerItemTextContainer: { flex: 1 },
     offerItemRowAlt: { backgroundColor: '#f8f9fa' },
     offerItemName: { fontSize: scaleFont(13), color: COLORS.text },

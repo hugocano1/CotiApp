@@ -51,4 +51,40 @@ export class StorageService {
     
     return `${data.publicUrl}?t=${new Date().getTime()}`;
   }
+
+  /**
+   * Sube una imagen para el chat de un pedido y devuelve la URL pública.
+   * @param uri - La URI local del archivo de imagen.
+   * @param orderId - El ID del pedido al que pertenece el mensaje.
+   * @returns La URL pública de la imagen subida.
+   */
+  static async uploadChatMessage(uri: string, orderId: string): Promise<string> {
+    const fileExt = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const fileName = `${new Date().getTime()}.${fileExt}`;
+    const filePath = `${orderId}/${fileName}`;
+
+    const formData = new FormData();
+    formData.append('file', {
+      uri: uri,
+      type: `image/${fileExt}`,
+      name: fileName,
+    } as any);
+
+    const { error: uploadError } = await supabase.storage
+      .from('order-attachments')
+      .upload(filePath, formData);
+
+    if (uploadError) {
+      console.error("Error subiendo imagen al chat:", uploadError);
+      throw new Error(`Error de Supabase Storage: ${uploadError.message}`);
+    }
+
+    const { data } = supabase.storage.from('order-attachments').getPublicUrl(filePath);
+    
+    if (!data.publicUrl) {
+      throw new Error("No se pudo obtener la URL pública del archivo.");
+    }
+    
+    return data.publicUrl;
+  }
 }

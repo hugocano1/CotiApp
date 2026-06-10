@@ -6,6 +6,7 @@ import { TouchableOpacity, StyleSheet } from 'react-native';
 
 import { COLORS } from '../../constants/Colors';
 import { useUnreadNotifications } from '../../src/hooks/useUnreadNotifications';
+import { useUnreadMessages } from '../../src/hooks/useUnreadMessages';
 
 // Componente para el ícono de la campana que se actualiza
 const NotificationIcon = ({ color }: { color: string }) => {
@@ -28,6 +29,7 @@ const NotificationIcon = ({ color }: { color: string }) => {
 
 export default function BuyerTabLayout() {
   const router = useRouter();
+  const { unreadCount } = useUnreadMessages();
   // Los estilos ahora usan el objeto plano COLORS directamente.
   const styles = createStyles(COLORS);
 
@@ -89,6 +91,16 @@ export default function BuyerTabLayout() {
             <TouchableOpacity {...props} style={styles.createButtonTab} />
           ),
           tabBarLabelStyle: { display: 'none' }, // Opcional: Ocultar el label para dar más espacio
+        }} 
+      />
+
+      <Tabs.Screen 
+        name="chats/index" 
+        options={{ 
+          title: 'Mensajes', 
+          headerShown: true,
+          tabBarIcon: ({ color }) => <Icon name="message-outline" type="material-community" color={color} />,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
         }} 
       />
 

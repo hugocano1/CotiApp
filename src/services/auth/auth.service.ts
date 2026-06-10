@@ -65,6 +65,14 @@ export class AuthService {
     if (error) throw this.handleAuthError(error);
   }
 
+  static async deleteAccount() {
+    const { error } = await supabase.rpc('delete_user_account');
+    if (error) throw new Error(error.message);
+    
+    // Si la eliminación en el backend fue exitosa, cerramos la sesión local
+    await supabase.auth.signOut();
+  }
+
   static handleAuthError(error: AuthError) {
     const messages: Record<string, string> = {
       'Invalid login credentials': 'Credenciales incorrectas',

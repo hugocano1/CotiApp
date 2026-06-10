@@ -11,10 +11,10 @@ interface ConfirmReceiptModalProps {
   isVisible: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  items: ShoppingListItem[];
+  items?: ShoppingListItem[] | any[];
 }
 
-export const ConfirmReceiptModal = ({ isVisible, onClose, onConfirm, items }: ConfirmReceiptModalProps) => {
+export const ConfirmReceiptModal = ({ isVisible, onClose, onConfirm, items = [] }: ConfirmReceiptModalProps) => {
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
 

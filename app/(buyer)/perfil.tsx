@@ -126,6 +126,28 @@ export default function BuyerProfileScreen() {
             Alert.alert("Error", error.message);
         }
     };
+
+    // ✅ NUEVA FUNCIÓN DE ELIMINAR CUENTA
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            "⚠️ Eliminar Cuenta",
+            "¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es irreversible y perderás todos tus datos, historial de pedidos y listas. Solo puedes hacerlo si no tienes pedidos activos.",
+            [
+                { text: "Cancelar", style: "cancel" },
+                { 
+                    text: "Eliminar Definitivamente", 
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await AuthService.deleteAccount();
+                        } catch (error: any) {
+                            Alert.alert("Error", error.message);
+                        }
+                    }
+                }
+            ]
+        );
+    };
     
     const calculateAge = (birthDateString: string | undefined) => {
         if (!birthDateString) return 'No establecido';
@@ -158,14 +180,20 @@ export default function BuyerProfileScreen() {
                 <View style={styles.header}>
                     <TouchableOpacity onPress={pickImage} disabled={!editMode}>
                         <View style={styles.avatarContainer}>
-                            <Avatar size={120} rounded source={displayAvatar ? { uri: displayAvatar } : undefined} title={!displayAvatar ? displayName.substring(0, 2).toUpperCase() : undefined} imageProps={{ style: { resizeMode: 'cover' } }}>
+                            <Avatar 
+                                size={120} 
+                                rounded 
+                                source={displayAvatar ? { uri: displayAvatar } : { uri: 'https://via.placeholder.com/120' }} 
+                                title={!displayAvatar ? displayName.substring(0, 2).toUpperCase() : undefined} 
+                                imageProps={{ style: { resizeMode: 'cover' } }}
+                            >
                                 {editMode && <View style={styles.editIconContainer}><Icon name="pencil" type="material-community" color="white" size={18} /></View>}
                             </Avatar>
                         </View>
                     </TouchableOpacity>
                     <Text style={styles.name}>{displayName} {editMode ? editedApellido : buyerProfile.apellido || ''}</Text>
                     <View style={styles.ratingContainer}>
-                        <Icon name="star" type="material-community" color={COLORS.accent} size={20} />
+                        <Icon name="star" type="material-community" color={COLORS.star} size={20} />
                         <Text style={styles.ratingText}>{buyerProfile.calificacion_comprador?.toFixed(1) || 'Sin calificación'}</Text>
                     </View>
                 </View>

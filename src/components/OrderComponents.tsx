@@ -1,77 +1,76 @@
 // src/components/OrderComponents.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Icon } from '@rneui/themed';
-import Colors from '@/constants/Colors'; // Import centralizado
-import { useColorScheme } from '@/components/useColorScheme'; // Hook de tema
+import { COLORS } from '../../constants/Colors';
 import { scaleFont } from '../utils/responsive';
+import { Icon } from '@rneui/themed';
 
 export const StatusDisplay = ({ status }: { status: string }) => {
-    const colorScheme = useColorScheme();
-    const themeColors = Colors[colorScheme ?? 'light'];
+  let label = status;
+  let color = COLORS.info; // Azul por defecto (Aceptado/Confirmado)
 
-    // Lógica de status actualizada con el nuevo sistema de diseño
-    const statusMap = {
-        // Usamos LiziBrand (tint) para estados de éxito o progreso activo
-        confirmed: { text: 'Por Despachar', color: themeColors.tint, icon: 'package-variant' }, 
-        ready_for_pickup: { text: 'Listo para Recoger', color: themeColors.tint, icon: 'store-clock' },
-        in_transit: { text: 'En Camino', color: themeColors.tint, icon: 'truck-delivery' },
-        delivered_pending_confirmation: { text: 'Recibido (Pendiente Pago)', color: '#FF9800', icon: 'currency-usd' },
-        completed: { text: 'Completado', color: '#4CAF50', icon: 'check-circle' },
-        cancelled: { text: 'Cancelado', color: '#F44336', icon: 'close-circle' },
-        // Usamos un gris para estados desconocidos o por defecto
-        default: { text: status, color: Colors.light.tabIconDefault, icon: 'help-circle' },
-    };
-    const currentStatus = statusMap[status as keyof typeof statusMap] || statusMap.default;
+  switch (status) {
+    case 'confirmed':
+      label = 'Confirmado';
+      color = COLORS.info; // Azul
+      break;
+    case 'ready_for_pickup':
+      label = 'Listo para recoger';
+      color = COLORS.processing; // Violeta
+      break;
+    case 'in_transit':
+      label = 'En camino';
+      color = COLORS.processing; // Violeta
+      break;
+    case 'delivered_pending_confirmation':
+      label = 'Entregado';
+      color = COLORS.processing; // Violeta
+      break;
+    case 'completed':
+      label = 'Completado';
+      color = COLORS.success; // Verde
+      break;
+    case 'cancelled':
+      label = 'Cancelado';
+      color = COLORS.danger; // Rojo
+      break;
+  }
 
-    // Los estilos se definen aquí para usar los colores
-    const styles = StyleSheet.create({
-        statusDisplay: { 
-            flexDirection: 'row', 
-            alignItems: 'center', 
-            paddingVertical: 4, 
-            paddingHorizontal: 8, 
-            borderRadius: 16,
-            backgroundColor: currentStatus.color
-        },
-        statusDisplayText: { 
-            color: Colors.dark.text, // Texto siempre blanco para buen contraste
-            fontSize: scaleFont(11), 
-            fontWeight: 'bold', 
-            marginLeft: 5 
-        },
-    });
-
-    return (
-        <View style={styles.statusDisplay}>
-            <Icon name={currentStatus.icon} type="material-community" color={Colors.dark.text} size={18} />
-            <Text style={styles.statusDisplayText}>{currentStatus.text}</Text>
-        </View>
-    );
+  return (
+    <View style={[styles.statusBadge, { backgroundColor: `${color}15`, borderColor: color }]}>
+      <Text style={[styles.statusText, { color: color }]}>{label}</Text>
+    </View>
+  );
 };
 
-export const CardTitle = ({ title, iconName }: { title: string, iconName?: string }) => {
-    const colorScheme = useColorScheme();
-    const themeColors = Colors[colorScheme ?? 'light'];
+export const CardTitle = ({ title, iconName }: { title: string, iconName?: string }) => (
+  <View style={styles.cardTitleContainer}>
+    {iconName && <Icon name={iconName} type="material-community" size={20} color={COLORS.secondary} style={{ marginRight: 8 }} />}
+    <Text style={styles.cardTitle}>{title}</Text>
+  </View>
+);
 
-    // Estilos que dependen del tema
-    const styles = StyleSheet.create({
-        cardTitleContainer: { 
-            flexDirection: 'row', 
-            alignItems: 'center', 
-            marginBottom: 8 
-        },
-        cardTitle: { 
-            fontSize: scaleFont(16), 
-            fontWeight: 'bold', 
-            color: themeColors.text // <- LiziDark (en modo light)
-        },
-    });
-
-    return (
-        <View style={styles.cardTitleContainer}>
-            {iconName && <Icon name={iconName} type="material-community" color={themeColors.text} size={20} containerStyle={{ marginRight: 8 }} />}
-            <Text style={styles.cardTitle}>{title}</Text>
-        </View>
-    );
-};
+const styles = StyleSheet.create({
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    fontSize: scaleFont(12),
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  cardTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  cardTitle: {
+    fontSize: scaleFont(16),
+    fontWeight: 'bold',
+    color: COLORS.secondary, // Slate Dark para elegancia
+  },
+});

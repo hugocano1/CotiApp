@@ -6,16 +6,15 @@ import { TouchableOpacity, StyleSheet } from 'react-native';
 
 import { useColorScheme } from '../../components/useColorScheme';
 import Colors from '../../constants/Colors';
-// Placeholder for notification hook - assuming it will be created for seller too
-// import { useUnreadNotifications } from '../../src/hooks/useUnreadNotifications';
+import { useUnreadNotifications } from '../../src/hooks/useUnreadNotifications';
+import { useUnreadMessages } from '../../src/hooks/useUnreadMessages';
 
 type ThemeColors = typeof Colors.light;
 
 // Componente para el ícono de la campana
 const NotificationIcon = ({ color }: { color: string }) => {
   const router = useRouter();
-  // const { unreadCount } = useUnreadNotifications(); // Placeholder
-  const unreadCount = 0; // Placeholder value
+  const { unreadCount } = useUnreadNotifications();
 
   return (
     <TouchableOpacity
@@ -23,7 +22,7 @@ const NotificationIcon = ({ color }: { color: string }) => {
       style={{ marginRight: 15 }}
     >
       <Icon 
-        name={unreadCount > 0 ? 'bell' : 'bell-outline'} 
+        name={unreadCount > 0 ? 'bell-badge' : 'bell-outline'} 
         type="material-community" 
         color={color} 
       />
@@ -35,6 +34,7 @@ export default function SellerTabLayout() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
+  const { unreadCount } = useUnreadMessages();
 
   const styles = createStyles(themeColors);
 
@@ -91,6 +91,17 @@ export default function SellerTabLayout() {
           tabBarIcon: ({ color }) => <Icon name="tag-multiple-outline" type="material-community" color={color} /> 
         }} 
       />
+
+      <Tabs.Screen 
+        name="chats/index" 
+        options={{ 
+          title: 'Mensajes', 
+          headerShown: true,
+          tabBarIcon: ({ color }) => <Icon name="message-outline" type="material-community" color={color} />,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+        }} 
+      />
+
       <Tabs.Screen 
         name="(pedidos)" 
         options={{ 

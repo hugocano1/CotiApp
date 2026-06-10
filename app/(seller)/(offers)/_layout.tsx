@@ -13,8 +13,6 @@ export default function OffersLayout() {
     >
       <Stack.Screen name="index" options={{ title: 'Mis Ofertas' }} />
       <Stack.Screen name="offer-details/[id]" options={{ title: 'Detalles de oferta' }} />
-      {/* ✅ AÑADIMOS LA PANTALLA PARA CREAR OFERTAS */}
-      <Stack.Screen name="create-offer" options={{ title: 'Crear oferta' }} />
     </Stack>
   );
 }

@@ -1,11 +1,10 @@
 // src/components/RatingModal.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
-import { Overlay, Icon } from '@rneui/themed';
-import { OrderService } from '../services/order.service';
-import Colors from '@/constants/Colors'; // Import centralizado
-import { useColorScheme } from '@/components/useColorScheme'; // Hook de tema
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { Icon, Button } from '@rneui/themed';
+import { COLORS } from '../../constants/Colors';
 import { scaleFont } from '../utils/responsive';
+import { supabase } from '../services/auth/config/supabaseClient';
 
 interface RatingModalProps {
   isVisible: boolean;
@@ -16,95 +15,96 @@ interface RatingModalProps {
 }
 
 export const RatingModal = ({ isVisible, onClose, orderId, ratedUserId, userType }: RatingModalProps) => {
-  const [view, setView] = useState<'rating' | 'success'>('rating');
   const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
-  const colorScheme = useColorScheme();
-  const themeColors = Colors[colorScheme ?? 'light'];
 
-  const handleRatingSubmit = async (selectedRating: number) => {
-    setRating(selectedRating);
+  const handleSubmit = async () => {
+    if (rating === 0) {
+      Alert.alert("Atención", "Por favor selecciona una calificación.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await OrderService.submitRating(orderId, selectedRating);
-      setView('success');
+      // Determinar qué columna actualizar en la tabla orders
+      const updateField = userType === 'buyer' ? 'rating_for_seller' : 'rating_for_buyer';
+      const commentField = userType === 'buyer' ? 'comment_for_seller' : 'comment_for_buyer';
+
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          [updateField]: rating,
+          [commentField]: comment,
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      Alert.alert("¡Gracias!", "Tu calificación ha sido enviada.");
+      onClose(true);
     } catch (error: any) {
-      Alert.alert("Error", `No se pudo enviar la calificación: ${error.message}`);
+      Alert.alert("Error", "No se pudo enviar la calificación: " + error.message);
     } finally {
       setLoading(false);
-      // Solo cerramos si la vista no es de éxito, o programamos el cierre
-      if (view !== 'success') {
-        setTimeout(() => {
-          onClose(true);
-          setTimeout(() => setView('rating'), 500); // Reset view after closing
-        }, 2000);
-      }
     }
   };
 
-  // Cierre automático después de mostrar el éxito
-  React.useEffect(() => {
-    if (view === 'success') {
-      const timer = setTimeout(() => {
-        onClose(true);
-        setTimeout(() => setView('rating'), 500); // Reset para la próxima vez
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [view, onClose]);
-
-  const modalTitle = userType === 'buyer' ? '¿Cómo fue tu experiencia?' : '¿Cómo fue la experiencia con el comprador?';
-  
-  // Estilos que dependen del tema
-  const styles = StyleSheet.create({
-    modalView: { 
-      backgroundColor: Colors.dark.background, // <- LiziDark
-      borderRadius: 20, 
-      padding: 35, 
-      alignItems: 'center', 
-      width: '90%' 
-    },
-    headerModal: { 
-      fontSize: scaleFont(22), 
-      fontWeight: 'bold', 
-      color: Colors.dark.text, // <- White
-      marginBottom: 10, 
-      textAlign: 'center' 
-    },
-    starsContainer: { 
-      flexDirection: 'row', 
-      justifyContent: 'space-around', 
-      width: '100%', 
-      marginVertical: 20 
-    },
-    successText: {
-      color: Colors.dark.text, // <- White
-      marginTop: 8,
-      fontSize: scaleFont(14),
-    }
-  });
-
   return (
-    <Overlay isVisible={isVisible} onBackdropPress={() => onClose(false)} overlayStyle={styles.modalView}>
-      {loading ? ( <ActivityIndicator size="large" color={themeColors.tint} /> ) : 
-      view === 'rating' ? (
-        <>
-          <Text style={styles.headerModal}>{modalTitle}</Text>
+    <Modal visible={isVisible} transparent animationType="fade">
+      <View style={styles.overlay}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Calificar Experiencia</Text>
+          <Text style={styles.subtitle}>¿Cómo calificarías el servicio de esta orden?</Text>
+          
           <View style={styles.starsContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => { setRating(star); handleRatingSubmit(star); }}>
-                <Icon name={star <= rating ? "star" : "star-outline"} type="material-community" color={themeColors.tint} size={40} />
+              <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                <Icon
+                  name={star <= rating ? "star" : "star-outline"}
+                  type="material-community"
+                  size={40}
+                  color={star <= rating ? COLORS.star : COLORS.gray} // ✅ Dorado para estrellas
+                />
               </TouchableOpacity>
             ))}
           </View>
-        </>
-      ) : (
-        <View style={{alignItems: 'center'}}>
-          <Icon name="party-popper" type="material-community" color={themeColors.tint} size={60} />
-          <Text style={styles.headerModal}>¡Gracias por tu Calificación!</Text>
-          <Text style={styles.successText}>Tu opinión ayuda a la comunidad.</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Deja un comentario (opcional)..."
+            multiline
+            numberOfLines={4}
+            value={comment}
+            onChangeText={setComment}
+          />
+
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Cancelar"
+              type="clear"
+              onPress={() => onClose(false)}
+              titleStyle={{ color: COLORS.gray }}
+            />
+            <Button
+              title="Enviar"
+              onPress={handleSubmit}
+              loading={loading}
+              buttonStyle={{ backgroundColor: COLORS.primary, borderRadius: 8, paddingHorizontal: 30 }}
+            />
+          </View>
         </View>
-      )}
-    </Overlay>
+      </View>
+    </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  content: { width: '85%', backgroundColor: 'white', borderRadius: 20, padding: 25, alignItems: 'center' },
+  title: { fontSize: scaleFont(20), fontWeight: 'bold', color: COLORS.secondary, marginBottom: 10 },
+  subtitle: { fontSize: scaleFont(14), color: COLORS.gray, textAlign: 'center', marginBottom: 20 },
+  starsContainer: { flexDirection: 'row', marginBottom: 20 },
+  input: { width: '100%', borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 15, marginBottom: 20, height: 100, textAlignVertical: 'top' },
+  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', alignItems: 'center' }
+});

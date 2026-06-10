@@ -155,13 +155,18 @@ export default function SellerProfileScreen() {
 
                 <View style={styles.headerContent}>
                     <TouchableOpacity onPress={pickImage} disabled={!editMode} style={styles.avatarContainer}>
-                        <Avatar size={120} rounded source={displayAvatar ? { uri: displayAvatar } : undefined} title={!displayAvatar ? storeName.substring(0, 2).toUpperCase() : undefined}>
+                        <Avatar 
+                            size={120} 
+                            rounded 
+                            source={displayAvatar ? { uri: displayAvatar } : { uri: 'https://via.placeholder.com/120' }} 
+                            title={!displayAvatar ? storeName.substring(0, 2).toUpperCase() : undefined}
+                        >
                             {editMode && <View style={styles.editIconContainer}><Icon name="pencil" type="material-community" color="white" size={18} /></View>}
                         </Avatar>
                     </TouchableOpacity>
                     <Text style={styles.storeName}>{storeName}</Text>
                     <View style={styles.ratingContainer}>
-                        <Icon name="star" type="material-community" color={COLORS.accent} size={20} />
+                        <Icon name="star" type="material-community" color={COLORS.star} size={20} />
                         <Text style={styles.ratingText}>{sellerProfile.calificacion_vendedor?.toFixed(1) || 'N/A'}</Text>
                     </View>
                 </View>

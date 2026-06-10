@@ -76,8 +76,8 @@ export function OrderListItem({ order, userRole }: Props) {
             <Text style={styles.price}>{formatCurrency(order.total_price)}</Text>
             {rating != null && (
               <View style={styles.ratingContainer}>
-                <Icon name="star" type="material-community" color={COLORS.primary} size={16}/>
-                <Text style={[styles.ratingText, { color: COLORS.primary }]}>{rating.toFixed(1)}</Text>
+                <Icon name="star" type="material-community" color={COLORS.star} size={16}/>
+                <Text style={[styles.ratingText, { color: COLORS.star }]}>{rating.toFixed(1)}</Text>
               </View>
             )}
           </View>
@@ -139,7 +139,7 @@ const createStyles = (colors: typeof COLORS) => StyleSheet.create({
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: `${colors.primary}20`,
+    backgroundColor: `${colors.star}15`,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,

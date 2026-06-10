@@ -24,7 +24,7 @@ export default {
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: "./assets/images/adaptative-icon.png",
+      foregroundImage: "./assets/images/icon.png",
       backgroundColor: "#ffffff"
     },
     // ✅ CORRECCIÓN FINAL Y DEFINITIVA DEL PAQUETE

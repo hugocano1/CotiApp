@@ -46,7 +46,7 @@ export default function WelcomeScreen() {
           </View>
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>Tengo un Negocio</Text>
-            <Text style={styles.cardDescription}>Publica ofertas, llega a más vecinos y haz crecer tus ventas.</Text>
+            <Text style={styles.cardDescription}>Crea cotizaciones, llega a más vecinos y haz crecer tus ventas.</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray} />
         </TouchableOpacity>
@@ -60,7 +60,7 @@ export default function WelcomeScreen() {
           </View>
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>Quiero Comprar</Text>
-            <Text style={styles.cardDescription}>Encuentra los mejores precios de tu zona y ahorra en tu lista.</Text>
+            <Text style={styles.cardDescription}>Ahora las ofertas llegan a ti, recibe los mejores precios publicando tu lista.</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray} />
         </TouchableOpacity>

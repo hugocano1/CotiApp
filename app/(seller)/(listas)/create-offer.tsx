@@ -1,34 +1,59 @@
 // app/(seller)/(listas)/create-offer.tsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Modal, Image, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Modal, Image, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Card, Icon } from '@rneui/themed';
 
 import { useColorScheme } from '../../../components/useColorScheme';
 import Colors from '../../../constants/Colors';
 import { ShoppingListService } from '../../../src/services/shoppingList.service';
+import { SellerService } from '../../../src/services/seller.service';
+import { useProductImage } from '../../../src/hooks/useProductImage';
 import { scaleFont } from '../../../src/utils/responsive';
-import { ShoppingList, ShoppingListItem, OfferItem } from '../../../src/types/entities';
+import { ShoppingList, ShoppingListItem, OfferItem, SellerWallet } from '../../../src/types/entities';
 import { formatCurrency } from '../../../src/utils/formatters';
 
 type ThemeColors = typeof Colors.light;
 
-// Modal para mostrar la imagen en grande
-const ImageZoomModal = ({ visible, imageUrl, onClose }: { visible: boolean; imageUrl: string | null; onClose: () => void; }) => {
-    const styles = createStyles(Colors.dark); // Forzar tema oscuro para el overlay
+// Modal para mostrar la imagen en grande con comparación
+const ImageZoomModal = ({ visible, buyerImageUrl, sellerImageUrl, onClose }: { visible: boolean; buyerImageUrl: string | null; sellerImageUrl: string | null; onClose: () => void; }) => {
+    const styles = createStyles(Colors.dark);
     return(
         <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
             <View style={styles.imageModalOverlay}>
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                     <Icon name="close" type="material-community" color={Colors.dark.text} size={32} />
                 </TouchableOpacity>
-                {imageUrl && imageUrl !== 'null' && <Image source={{ uri: imageUrl }} style={styles.enlargedImage} resizeMode="contain" />}
+                
+                <View style={styles.zoomContainer}>
+                    {buyerImageUrl && (
+                        <View style={styles.zoomWrapper}>
+                            <Text style={styles.zoomLabel}>Lo que pidió el cliente</Text>
+                            <Image source={{ uri: buyerImageUrl }} style={styles.enlargedImage} resizeMode="contain" />
+                        </View>
+                    )}
+                    {sellerImageUrl && (
+                        <View style={styles.zoomWrapper}>
+                            <Text style={[styles.zoomLabel, { color: Colors.dark.tint }]}>Tu propuesta de producto</Text>
+                            <Image source={{ uri: sellerImageUrl }} style={styles.enlargedImage} resizeMode="contain" />
+                        </View>
+                    )}
+                </View>
             </View>
         </Modal>
     );
 };
 
-const OfferItemCard = React.memo(({ item, onPriceChange, price, onImagePress, themeColors }: { item: ShoppingListItem; onPriceChange: (itemId: string, price: string) => void; price: string; onImagePress: (uri: string) => void; themeColors: ThemeColors}) => {
+const OfferItemCard = React.memo(({ item, onPriceChange, price, onImagePress, themeColors, sellerImageUrl, onAddSellerImage, uploadingImage }: { 
+    item: ShoppingListItem; 
+    onPriceChange: (itemId: string, price: string) => void; 
+    price: string; 
+    onImagePress: (buyerUri: string | null, sellerUri: string | null) => void; 
+    themeColors: ThemeColors;
+    sellerImageUrl?: string;
+    onAddSellerImage: (itemId: string) => void;
+    uploadingImage: boolean;
+}) => {
     const styles = createStyles(themeColors);
     const handleTextChange = useCallback((newPrice: string) => {
         onPriceChange(item.id, newPrice);
@@ -37,13 +62,42 @@ const OfferItemCard = React.memo(({ item, onPriceChange, price, onImagePress, th
     return (
         <Card containerStyle={styles.itemCard}>
             <View style={styles.cardRow}>
-                {item.image_url && item.image_url !== 'null' ? (
-                    <TouchableOpacity onPress={() => onImagePress(item.image_url!)}>
-                        <Image source={{ uri: item.image_url }} style={styles.itemImage} />
-                    </TouchableOpacity>
-                ) : (
-                    <View style={styles.itemImage} />
-                )}
+                <View style={styles.imageComparisonRow}>
+                    <View style={styles.imageWrapper}>
+                        {item.image_url && item.image_url !== 'null' ? (
+                            <TouchableOpacity onPress={() => onImagePress(item.image_url!, sellerImageUrl || null)}>
+                                <Image source={{ uri: item.image_url }} style={styles.itemImage} />
+                            </TouchableOpacity>
+                        ) : (
+                            <View style={[styles.itemImage, styles.placeholderImage]}>
+                                <Icon name="image-off-outline" type="material-community" color={Colors.light.tabIconDefault} size={20} />
+                            </View>
+                        )}
+                        <Text style={styles.imageLabel}>Cliente</Text>
+                    </View>
+
+                    <View style={styles.imageWrapper}>
+                        {sellerImageUrl ? (
+                            <TouchableOpacity onPress={() => onImagePress(item.image_url || null, sellerImageUrl)}>
+                                <Image source={{ uri: sellerImageUrl }} style={styles.itemImage} />
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity 
+                                style={[styles.itemImage, styles.addPhotoBtn]} 
+                                onPress={() => onAddSellerImage(item.id)}
+                                disabled={uploadingImage}
+                            >
+                                {uploadingImage ? (
+                                    <ActivityIndicator size="small" color={themeColors.tint} />
+                                ) : (
+                                    <Icon name="camera-plus-outline" type="material-community" color={themeColors.tint} size={24} />
+                                )}
+                            </TouchableOpacity>
+                        )}
+                        <Text style={[styles.imageLabel, sellerImageUrl && { color: themeColors.tint }]}>Tu Foto</Text>
+                    </View>
+                </View>
+
                 <View style={styles.itemDetailsColumn}>
                     <Text style={styles.itemName}>{item.name}</Text>
                     <View style={styles.metaContainer}>
@@ -90,6 +144,7 @@ export default function CreateOfferScreen() {
     const styles = createStyles(themeColors);
 
     const [list, setList] = useState<ShoppingList | null>(null);
+    const [wallet, setWallet] = useState<SellerWallet | null>(null);
     const [itemPrices, setItemPrices] = useState<Record<string, string>>({});
     const [shippingCost, setShippingCost] = useState('');
     const [notes, setNotes] = useState('');
@@ -98,28 +153,43 @@ export default function CreateOfferScreen() {
     const [isSubmitModalVisible, setSubmitModalVisible] = useState(false);
     
     const [isImageModalVisible, setImageModalVisible] = useState(false);
-    const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+    const [selectedImagesForZoom, setSelectedImagesForZoom] = useState<{buyer: string | null, seller: string | null}>({ buyer: null, seller: null });
+    const [sellerImages, setSellerImages] = useState<Record<string, string>>({});
 
-    const handleImagePress = (uri: string) => {
-        setSelectedImageUri(uri);
+    const { handlePickAndUploadImage, uploading: uploadingImage } = useProductImage();
+
+    const handleAddSellerImage = async (itemId: string) => {
+        const publicUrl = await handlePickAndUploadImage();
+        if (publicUrl) {
+            setSellerImages(prev => ({ ...prev, [itemId]: publicUrl }));
+        }
+    };
+
+    const handleImagePress = (buyerUri: string | null, sellerUri: string | null) => {
+        setSelectedImagesForZoom({ buyer: buyerUri, seller: sellerUri });
         setImageModalVisible(true);
     };
 
+
     useEffect(() => {
-        const fetchListDetails = async () => {
+        const fetchData = async () => {
             if (!listId) return;
             try {
                 setLoading(true);
-                const listDetails = await ShoppingListService.getListDetails(listId);
+                const [listDetails, walletDetails] = await Promise.all([
+                    ShoppingListService.getListDetails(listId),
+                    SellerService.getMyWallet()
+                ]);
+                
                 if (listDetails) setList(listDetails);
-                else Alert.alert("Error", "No se pudieron cargar los artículos de la lista.");
+                if (walletDetails) setWallet(walletDetails);
             } catch (error: any) {
-                Alert.alert("Error", `Error al cargar la lista: ${error.message}`);
+                Alert.alert("Error", `Error al cargar datos: ${error.message}`);
             } finally {
                 setLoading(false);
             }
         };
-        fetchListDetails();
+        fetchData();
     }, [listId]);
 
     const handlePriceChange = useCallback((itemId: string, price: string) => {
@@ -145,6 +215,27 @@ export default function CreateOfferScreen() {
             Alert.alert("Precios incompletos", "Por favor, ingresa un precio válido mayor a cero para todos los artículos.");
             return;
         }
+
+        // VALIDACIÓN DE SALDO PERSUASIVA
+        const estimatedCommission = finalTotal * 0.05;
+        const availableBalance = (wallet?.balance || 0) - (wallet?.frozen_balance || 0);
+
+        if (availableBalance < estimatedCommission) {
+            Alert.alert(
+                "¡Ups! Saldo insuficiente 💰",
+                `Para enviar esta oferta de ${formatCurrency(finalTotal)}, necesitas al menos ${formatCurrency(estimatedCommission)} en tu billetera para cubrir la comisión de reserva.\n\n¡Recarga ahora y no pierdas esta venta!`,
+                [
+                    { text: "Ahora no", style: "cancel" },
+                    { 
+                        text: "Ir a mi Billetera", 
+                        onPress: () => router.push('/(seller)/wallet'),
+                        style: "default"
+                    }
+                ]
+            );
+            return;
+        }
+
         setSubmitModalVisible(true);
     };
 
@@ -152,15 +243,29 @@ export default function CreateOfferScreen() {
         if (!list) return;
         setSubmitting(true);
         try {
-            const itemsWithPrices: OfferItem[] = list.items.map(item => ({
-                item_name: `${item.name}__ID__${item.id}${item.image_url ? `__IMG__${item.image_url}` : ''}`,
-                quantity: item.quantity, unit: item.unit, brand: item.brand,
-                unit_price: parseFloat(itemPrices[item.id] || '0'),
-            }));
+            const itemsWithPrices: OfferItem[] = list.items.map(item => {
+                const buyerImg = item.image_url || 'null';
+                const sellerImg = sellerImages[item.id] || 'null';
+                
+                // Formato extendido del Caballo de Troya:
+                // Nombre__ID__uuid__IMG__UrlComprador__SELLERIMG__UrlVendedor
+                const trojanName = `${item.name}__ID__${item.id}__IMG__${buyerImg}__SELLERIMG__${sellerImg}`;
+
+                return {
+                    item_name: trojanName,
+                    quantity: item.quantity,
+                    unit: item.unit,
+                    brand: item.brand,
+                    unit_price: parseFloat(itemPrices[item.id] || '0'),
+                };
+            });
             
             await ShoppingListService.createDetailedOffer({
-                shopping_list_id: listId!, total_price: finalTotal, notes: notes,
-                items: itemsWithPrices, shipping_cost: parseFloat(shippingCost) || 0,
+                shopping_list_id: listId!,
+                total_price: finalTotal,
+                notes: notes,
+                items: itemsWithPrices,
+                shipping_cost: parseFloat(shippingCost) || 0,
             });
 
             setSubmitModalVisible(false);
@@ -173,10 +278,6 @@ export default function CreateOfferScreen() {
         }
     }, [list, itemPrices, finalTotal, shippingCost, notes, router]);
 
-    const renderItem = useCallback(({ item }: { item: ShoppingListItem }) => (
-        <OfferItemCard item={item} price={itemPrices[item.id] || ''} onPriceChange={handlePriceChange} onImagePress={handleImagePress} themeColors={themeColors} />
-    ), [handlePriceChange, itemPrices, themeColors]);
-    
     const renderFooter = () => (
         <View style={styles.summaryContainer}>
             <Text style={styles.totalText}>Subtotal: {formatCurrency(totalItemsPrice)}</Text>
@@ -228,7 +329,7 @@ export default function CreateOfferScreen() {
     if (!list) return <View style={styles.centered}><Text style={{color: themeColors.text}}>No se encontró la lista.</Text></View>;
 
     return (
-        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
              <View style={styles.header}>
                 <Text style={styles.title}>Crear oferta</Text>
                 <Text style={styles.listTitle}>Para la lista: {list.title}</Text>
@@ -238,13 +339,33 @@ export default function CreateOfferScreen() {
                 <Icon name="information-outline" type="material-community" color={themeColors.tint} size={18} />
                 <Text style={styles.infoText}>Ingresa el precio por unidad. Si el producto tiene impuestos incluyelos en el valor.</Text>
             </View>
-            <FlatList
-                data={list.items} renderItem={renderItem} keyExtractor={(item) => item.id}
-                extraData={itemPrices} ListFooterComponent={renderFooter}
+            <ScrollView
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
                 contentContainerStyle={{ paddingBottom: 20 }}
-            />
+            >
+                {list.items.map(item => (
+                    <OfferItemCard 
+                        key={item.id} 
+                        item={item} 
+                        price={itemPrices[item.id] || ''} 
+                        onPriceChange={handlePriceChange} 
+                        onImagePress={handleImagePress} 
+                        themeColors={themeColors} 
+                        sellerImageUrl={sellerImages[item.id]}
+                        onAddSellerImage={handleAddSellerImage}
+                        uploadingImage={uploadingImage}
+                    />
+                ))}
+                {renderFooter()}
+            </ScrollView>
             {renderSubmitModal()}
-            <ImageZoomModal visible={isImageModalVisible} imageUrl={selectedImageUri} onClose={() => setImageModalVisible(false)} />
+            <ImageZoomModal 
+                visible={isImageModalVisible} 
+                buyerImageUrl={selectedImagesForZoom.buyer} 
+                sellerImageUrl={selectedImagesForZoom.seller}
+                onClose={() => setImageModalVisible(false)} 
+            />
         </KeyboardAvoidingView>
     );
 }
@@ -260,7 +381,12 @@ const createStyles = (themeColors: ThemeColors) => StyleSheet.create({
     infoText: { fontSize: scaleFont(12), color: themeColors.text, marginLeft: 8, flex: 1 },
     itemCard: { borderRadius: 12, marginHorizontal: 10, marginTop: 0, marginBottom: 10, padding: 0, backgroundColor: themeColors.card, borderWidth: 1, borderColor: themeColors.border },
     cardRow: { flexDirection: 'row', padding: 12, alignItems: 'center' },
-    itemImage: { width: 50, height: 50, borderRadius: 8, marginRight: 12, backgroundColor: themeColors.background },
+    imageComparisonRow: { flexDirection: 'column', marginRight: 12, alignItems: 'center' },
+    imageWrapper: { alignItems: 'center', marginBottom: 6 },
+    itemImage: { width: 50, height: 50, borderRadius: 8, backgroundColor: themeColors.background },
+    placeholderImage: { justifyContent: 'center', alignItems: 'center', borderStyle: 'dashed', borderWidth: 1, borderColor: themeColors.border },
+    addPhotoBtn: { justifyContent: 'center', alignItems: 'center', backgroundColor: `${themeColors.tint}10`, borderStyle: 'dashed', borderWidth: 1, borderColor: themeColors.tint },
+    imageLabel: { fontSize: scaleFont(9), color: Colors.light.tabIconDefault, marginTop: 2, fontWeight: 'bold', textTransform: 'uppercase' },
     itemDetailsColumn: { flex: 1, paddingRight: 10 },
     priceInputColumn: { alignItems: 'flex-end', justifyContent: 'center' },
     itemName: { fontSize: scaleFont(16), fontWeight: '600', color: themeColors.text, marginBottom: 8 },
@@ -292,6 +418,9 @@ const createStyles = (themeColors: ThemeColors) => StyleSheet.create({
     cancelButtonTitle: { color: themeColors.accent },
     confirmButton: { backgroundColor: themeColors.tint, borderWidth: 0 },
     imageModalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.9)', justifyContent: 'center', alignItems: 'center' },
+    zoomContainer: { flexDirection: 'row', width: '100%', height: '80%', paddingHorizontal: 10 },
+    zoomWrapper: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    zoomLabel: { color: 'white', fontSize: scaleFont(14), fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
     enlargedImage: { width: '95%', height: '80%' },
     closeButton: { position: 'absolute', top: 50, right: 15, zIndex: 1, padding: 10 },
 });

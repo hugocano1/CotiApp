@@ -38,8 +38,8 @@ export class ShoppingListService {
       min_budget: listData.min_budget, 
       max_budget: listData.max_budget, 
       delivery_address_text: listData.delivery_address_text,
-      latitude: listData.latitude,
-      longitude: listData.longitude,
+      latitude_exact: listData.latitude, // ✅ Guardar en la columna protegida
+      longitude_exact: listData.longitude, // ✅ Guardar en la columna protegida
     });
 
     if (error) {
@@ -59,6 +59,15 @@ export class ShoppingListService {
     const { data, error } = await supabase.from('shopping_lists').select('*, buyer_profiles(nombre, apellido)').eq('id', listId).single();
     if (error) { console.error("Error fetching list details:", error); throw new Error(error.message); }
     return data;
+  }
+
+  static async getExactLocation(listId: string) {
+    const { data, error } = await supabase.rpc('get_exact_location', { p_list_id: listId });
+    if (error) {
+      console.error("Error fetching exact location:", error);
+      throw new Error(error.message);
+    }
+    return data && data.length > 0 ? data[0] : null;
   }
 
   static async getOfferDetails(offerId: string) {
@@ -154,23 +163,17 @@ export class ShoppingListService {
     items: OfferItem[];
     shipping_cost: number;
   }) {
-    // El RPC `create_offer_and_notify` se encarga de toda la transacción,
-    // incluyendo la creación de la oferta, sus artículos y la notificación push.
-    
-    // Preparamos los artículos para el formato JSON que espera la función RPC.
-    // Aquí revertimos el workaround del `__ID__` que se añade en el cliente.
     const itemsForRpc = data.items.map(item => {
-      // El payload de item.item_name es "Name__ID__uuid__IMG__url" o "Name__ID__uuid"
       const idPayload = item.item_name.split('__ID__')[1];
       if (!idPayload) {
         throw new Error(`ID del artículo de la lista no encontrado en el nombre: "${item.item_name}"`);
       }
       
-      const cleanItemId = idPayload.split('__IMG__')[0]; // Extrae solo el UUID
+      const cleanItemId = idPayload.split('__IMG__')[0];
 
       return {
-        item_name: item.item_name, // Mantenemos el payload completo para que se guarde en offer_items.item_name
-        list_item_id: cleanItemId, // Pasamos el UUID limpio que la función RPC espera
+        item_name: item.item_name,
+        list_item_id: cleanItemId,
         quantity: item.quantity,
         unit: item.unit,
         brand: item.brand,

@@ -1,9 +1,10 @@
 // app/(seller)/(pedidos)/order-details/[id].tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, Image, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, Image, Linking, Platform, TouchableOpacity } from 'react-native';
 import { Card, Icon, Button } from '@rneui/themed';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { OrderService } from '../../../../src/services/order.service';
+import { ShoppingListService } from '../../../../src/services/shoppingList.service'; // ✅ IMPORTADO
 import { COLORS } from '../../../../constants/Colors';
 import { InfoRow } from '../../../../src/components/InfoRow';
 import { scaleFont } from '../../../../src/utils/responsive';
@@ -27,19 +28,32 @@ export default function SellerOrderDetailsScreen() {
   const { id: orderId } = useLocalSearchParams();
   const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
+  const [exactCoords, setExactCoords] = useState<{lat_exact: number, lng_exact: number} | null>(null); // ✅ NUEVO ESTADO
   const [loading, setLoading] = useState(true);
   const [isRatingModalVisible, setRatingModalVisible] = useState(false);
 
-  const fetchDetails = useCallback(() => {
+  const fetchDetails = useCallback(async () => {
     if (typeof orderId === 'string') {
       setLoading(true);
-      OrderService.getOrderDetails(orderId)
-        .then(setOrder)
-        .catch(err => {
-            console.error(err);
-            Alert.alert("Error", "No se pudieron cargar los detalles del pedido.");
-        })
-        .finally(() => setLoading(false));
+      try {
+        const orderData = await OrderService.getOrderDetails(orderId);
+        setOrder(orderData);
+
+        // Si es a domicilio y el pedido no está completado ni cancelado, intentar obtener la ubicación exacta
+        if (orderData?.shopping_lists?.delivery_type === 'delivery' && !['completed', 'cancelled'].includes(orderData.status)) {
+          try {
+            const coords = await ShoppingListService.getExactLocation(orderData.shopping_list_id);
+            if (coords) setExactCoords(coords);
+          } catch (e) {
+            // Silently ignore or just debug log without error to avoid console pollution
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        Alert.alert("Error", "No se pudieron cargar los detalles del pedido.");
+      } finally {
+        setLoading(false);
+      }
     }
   }, [orderId]);
   
@@ -106,8 +120,8 @@ export default function SellerOrderDetailsScreen() {
   };
 
   const openGps = () => {
-    const lat = listInfo?.latitude;
-    const lng = listInfo?.longitude;
+    const lat = exactCoords?.lat_exact || order?.shopping_lists?.latitude;
+    const lng = exactCoords?.lng_exact || order?.shopping_lists?.longitude;
     if (lat && lng) {
       const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
       const latLng = `${lat},${lng}`;
@@ -123,8 +137,8 @@ export default function SellerOrderDetailsScreen() {
   };
 
   const sendToDriver = () => {
-    const lat = listInfo?.latitude;
-    const lng = listInfo?.longitude;
+    const lat = exactCoords?.lat_exact || order?.shopping_lists?.latitude;
+    const lng = exactCoords?.lng_exact || order?.shopping_lists?.longitude;
     if (lat && lng) {
         const clientName = order?.buyer_profiles?.nombre || 'Cliente';
         const mapUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
@@ -173,8 +187,19 @@ export default function SellerOrderDetailsScreen() {
 
       <Card containerStyle={styles.card}>
         <View style={styles.headerContainer}>
-            <Text style={styles.headerTitle}>Pedido de: {order.buyer_profiles?.nombre || 'Comprador'}</Text>
-            <StatusDisplay status={order.status} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.headerTitle}>Pedido de: {order.buyer_profiles?.nombre || 'Comprador'}</Text>
+              <StatusDisplay status={order.status} />
+            </View>
+            {order.status !== 'completed' && order.status !== 'cancelled' && (
+              <TouchableOpacity 
+                style={styles.chatButton} 
+                onPress={() => router.push({ pathname: "/(shared)/chat/[orderId]", params: { orderId: order.id } })}
+              >
+                <Icon name="message-text" type="material-community" color={COLORS.primary} size={28} />
+                <Text style={styles.chatButtonText}>Chat</Text>
+              </TouchableOpacity>
+            )}
         </View>
         <Card.Divider style={{ marginVertical: 15 }}/>
         <InfoRow icon="cash" label="Valor Total" value={formatCurrency(order.total_price)} />
@@ -189,7 +214,7 @@ export default function SellerOrderDetailsScreen() {
         )}
       </Card>
       
-      {listInfo?.delivery_type === 'delivery' && listInfo?.latitude && listInfo?.longitude && (
+      {listInfo?.delivery_type === 'delivery' && (listInfo?.latitude || exactCoords) && (
         <Card containerStyle={styles.card}>
             <CardTitle title="Logística de Entrega" iconName="map-marker-radius" />
             <Card.Divider />
@@ -250,16 +275,9 @@ export default function SellerOrderDetailsScreen() {
               icon={<Icon name={order.shopping_lists?.delivery_type === 'pickup' ? "store-check" : "truck-delivery"} type="material-community" color={COLORS.primary} containerStyle={{marginRight: 10}} />}
            />
         )}
-        {(order.status === 'ready_for_pickup' || order.status === 'in_transit') && (
-           <View>
-             <Text style={styles.infoText}>
-               {order.status === 'ready_for_pickup' ? "El cliente ya puede pasar por el pedido." : "El pedido va en camino."}
-             </Text>
-             <Text style={styles.infoText}>Esperando que el comprador confirme recepción.</Text>
-           </View>
-        )}
-        {/* ✅ PERMITIR CONFIRMAR PAGO SI ESTÁ LISTO PARA RECOGER O YA RECIBIDO */}
-        {(order.status === 'delivered_pending_confirmation' || order.status === 'ready_for_pickup') && (
+        
+        {/* ✅ BOTÓN DE CONFIRMAR PAGO: Visible si el pedido está listo para recoger, en tránsito o entregado pendiente de confirmación */}
+        {['ready_for_pickup', 'in_transit', 'delivered_pending_confirmation'].includes(order.status) && (
           <Button 
             title="Confirmar Pago Recibido 💵"
             onPress={handleConfirmPayment}
@@ -268,6 +286,22 @@ export default function SellerOrderDetailsScreen() {
             icon={<Icon name="cash-check" type="material-community" color="white" containerStyle={{marginRight: 10}} />}
           />
         )}
+
+        {(order.status === 'ready_for_pickup' || order.status === 'in_transit') && (
+           <View style={{ marginTop: 15 }}>
+             <Text style={styles.infoText}>
+               {order.status === 'ready_for_pickup' ? "El cliente ya puede pasar por el pedido." : "El pedido va en camino."}
+             </Text>
+             <Text style={styles.infoText}>Una vez recibas el pago (o si ya lo recibiste), pulsa el botón verde para finalizar.</Text>
+           </View>
+        )}
+
+        {order.status === 'delivered_pending_confirmation' && (
+            <View style={{ marginTop: 15 }}>
+                <Text style={styles.infoText}>El comprador ya marcó el pedido como recibido. ✅</Text>
+            </View>
+        )}
+
         {order.status === 'completed' && !order.rating_for_buyer && (
            <Button title="Calificar a Comprador" onPress={() => setRatingModalVisible(true)} buttonStyle={{backgroundColor: COLORS.accent}} titleStyle={{color: COLORS.primary, fontWeight: 'bold'}} />
         )}
@@ -291,7 +325,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background, paddingVertical: 8 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   card: { borderRadius: 12, marginHorizontal: 12, marginBottom: 8, paddingBottom: 10 },
-  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { fontSize: scaleFont(18), fontWeight: 'bold', color: COLORS.primary, flex: 1 },
   itemContainer: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   itemRow: { flexDirection: 'row', alignItems: 'center' },
@@ -301,5 +335,7 @@ const styles = StyleSheet.create({
   itemPrice: { fontSize: scaleFont(14), fontWeight: 'bold', color: COLORS.primary },
   itemQuantity: { fontSize: scaleFont(14), fontWeight: 'bold', color: COLORS.primary },
   itemDetails: { fontSize: scaleFont(12), color: COLORS.gray, marginTop: 4 },
-  infoText: { textAlign: 'center', color: COLORS.gray, fontStyle: 'italic', padding: 10}
+  infoText: { textAlign: 'center', color: COLORS.gray, fontStyle: 'italic', padding: 10},
+  chatButton: { alignItems: 'center', justifyContent: 'center', padding: 10, backgroundColor: '#F0F9F8', borderRadius: 12, borderWidth: 1, borderColor: COLORS.primary },
+  chatButtonText: { fontSize: scaleFont(12), fontWeight: 'bold', color: COLORS.primary, marginTop: 2 }
 });
